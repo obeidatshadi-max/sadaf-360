@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Glossary } from "@/components/glossary";
 import { PageHeading } from "@/components/page-heading";
 import { AGING_BUCKETS } from "@/core/receivables";
 import { requireUser } from "@/lib/auth/current-user";
@@ -17,7 +18,7 @@ export default async function FinancePage() {
       <PageHeading
         eyebrow="Finance & profitability"
         title="Sales, margin and receivables"
-        sub="Sign in as a company user to see receivables from imported data. The guest view shows demonstration figures on the Overview only."
+        sub="Please sign in with a company account to see this page. It uses the data you imported. Guests see demonstration numbers on the Overview page only."
       />
     );
   }
@@ -36,7 +37,7 @@ export default async function FinancePage() {
         <PageHeading
           eyebrow={`${user.companyName} · Finance & profitability`}
           title="Sales, margin and receivables"
-          sub="No unpaid-invoice file has been imported yet. Import the Unpaid invoices export (E05) to see what customers owe and how late it is."
+          sub="You have not imported the unpaid-invoices file yet. Import it (file E05) to see how much customers owe and how late they are."
         />
         {salesSection}
         {user.role === "owner" ? (
@@ -59,15 +60,15 @@ export default async function FinancePage() {
       <PageHeading
         eyebrow={`${user.companyName} · Finance & profitability`}
         title="Sales, margin and receivables"
-        sub={`Unpaid invoices as of ${r.asOf} (source: Unpaid invoices export, ${r.sourceRows} rows). Age is counted from each invoice's due date. Invoices with no due date are shown apart and are not guessed.`}
+        sub={`Invoices that customers have not paid, on ${r.asOf} (from the unpaid-invoices file, ${r.sourceRows} rows). We count the days after each invoice's due date. An invoice with no due date is shown separately. We do not guess its age.`}
       />
       {salesSection}
-      <h2 className="mb-3 mt-8 text-sm font-semibold">Receivables</h2>
+      <h2 className="mb-3 mt-8 text-sm font-semibold">Receivables (money customers owe you)</h2>
       <div className="grid grid-cols-2 gap-[10px] md:gap-[14px] min-[1000px]:grid-cols-3">
         {[
-          { label: "Total unpaid", value: jod(r.total), note: `As of ${r.asOf}` },
-          { label: "Overdue", value: jod(r.overdue), note: "Past the due date" },
-          { label: "Due date missing", value: jod(r.dueDateMissing.amount), note: `${r.dueDateMissing.invoices} invoice${r.dueDateMissing.invoices === 1 ? "" : "s"}, not aged` },
+          { label: "Total unpaid", value: jod(r.total), note: `On ${r.asOf}` },
+          { label: "Overdue", value: jod(r.overdue), note: "Not paid after the due date" },
+          { label: "Due date missing", value: jod(r.dueDateMissing.amount), note: `${r.dueDateMissing.invoices} invoice${r.dueDateMissing.invoices === 1 ? "" : "s"}, age not known` },
         ].map((s) => (
           <div key={s.label} className="rounded-[9px] border border-line bg-white p-[15px] md:p-[21px]">
             <p className="text-[11px] text-muted md:text-xs">{s.label}</p>
@@ -78,7 +79,7 @@ export default async function FinancePage() {
       </div>
 
       <section aria-label="Aging buckets" className="mt-5 rounded-[9px] border border-line bg-white p-[15px] md:p-[21px]">
-        <h2 className="text-sm font-semibold">By age</h2>
+        <h2 className="text-sm font-semibold">Unpaid invoices by age (days after the due date)</h2>
         <ul className="mt-3 space-y-2.5">
           {bars.map((b) => (
             <li key={b.label} className="grid grid-cols-[110px_1fr_auto] items-center gap-3 text-xs md:grid-cols-[140px_1fr_auto]">
@@ -93,7 +94,7 @@ export default async function FinancePage() {
       </section>
 
       <section aria-label="Customers with most overdue" className="mt-5">
-        <h2 className="text-sm font-semibold">Customers with the most overdue</h2>
+        <h2 className="text-sm font-semibold">Customers with the most late payments</h2>
         {r.topOverdue.length === 0 ? (
           <p className="mt-2 text-sm text-muted">Nothing is overdue.</p>
         ) : (
@@ -102,7 +103,7 @@ export default async function FinancePage() {
               <thead className="text-xs text-muted">
                 <tr>
                   <th className="px-3 py-2 font-medium">Customer</th>
-                  <th className="px-3 py-2 text-right font-medium">Overdue</th>
+                  <th className="px-3 py-2 text-right font-medium">Overdue amount</th>
                   <th className="px-3 py-2 text-right font-medium">Invoices</th>
                   <th className="px-3 py-2 text-right font-medium">Oldest</th>
                 </tr>
@@ -123,6 +124,7 @@ export default async function FinancePage() {
           </div>
         )}
       </section>
+      <Glossary page="finance" />
     </div>
   );
 }
@@ -134,9 +136,9 @@ function SalesByLine({ sales }: { sales: Sales }) {
   const anyGap = rows.some((x) => typeof x.costCoverage === "number" && x.costCoverage < 1);
   return (
     <section aria-label="Sales and margin by line" className="mb-2">
-      <h2 className="text-sm font-semibold">Sales and margin by line, year to date</h2>
+      <h2 className="text-sm font-semibold">Sales and margin by line, this year so far</h2>
       <p className="mt-1 text-xs text-muted">
-        {sales.from} to {sales.to}, against {sales.priorFrom} to {sales.priorTo}. Net of tax, returns deducted. Source: Sales and returns export.
+        {sales.from} to {sales.to}, compared with {sales.priorFrom} to {sales.priorTo}. Sales without tax, after taking off returned goods. From the sales file.
       </p>
       <div className="mt-2 overflow-x-auto rounded-lg border border-line bg-white">
         <table className="w-full text-left text-sm">
@@ -146,8 +148,8 @@ function SalesByLine({ sales }: { sales: Sales }) {
               <th className="px-3 py-2 text-right font-medium">Sales</th>
               <th className="px-3 py-2 text-right font-medium">vs last year</th>
               <th className="px-3 py-2 text-right font-medium">Gross profit</th>
-              <th className="px-3 py-2 text-right font-medium">Margin</th>
-              <th className="px-3 py-2 text-right font-medium">Cost known</th>
+              <th className="px-3 py-2 text-right font-medium">Margin (%)</th>
+              <th className="px-3 py-2 text-right font-medium">Cost known (share of sales)</th>
             </tr>
           </thead>
           <tbody>
@@ -166,8 +168,8 @@ function SalesByLine({ sales }: { sales: Sales }) {
       </div>
       <p className="mt-1.5 text-xs text-muted">
         {anyGap
-          ? "Where cost is known for less than 100% of sales, gross profit and margin use only the sales that have a cost. The rest is left out, not counted as zero cost."
-          : "A dash means there is not enough data to work the figure out (for example no sales last year)."}
+          ? "For some sales the product cost is missing. Gross profit and margin use only the sales that have a cost. We do not treat the missing cost as zero."
+          : "A dash (—) means we cannot work out the number yet, for example because there were no sales last year."}
       </p>
     </section>
   );
@@ -179,8 +181,8 @@ function CashCollected({ cash }: { cash: Cash }) {
   if (!cash) {
     return (
       <section aria-label="Cash collected" className="mt-6">
-        <h2 className="text-sm font-semibold">Cash collected, year to date</h2>
-        <p className="mt-1 text-xs text-muted">No customer receipts have been imported yet. Import the Customer receipts export (E04).</p>
+        <h2 className="text-sm font-semibold">Cash collected, this year so far</h2>
+        <p className="mt-1 text-xs text-muted">You have not imported the customer receipts file yet. Import it (file E04).</p>
       </section>
     );
   }
@@ -189,13 +191,13 @@ function CashCollected({ cash }: { cash: Cash }) {
     <section aria-label="Cash collected" className="mt-6">
       <h2 className="text-sm font-semibold">Cash collected, year to date</h2>
       <p className="mt-1 text-xs text-muted">
-        {cash.from} to {cash.to}, against {cash.priorFrom} to {cash.priorTo}. Source: Customer receipts export. Each receipt row is counted once.
+        {cash.from} to {cash.to}, compared with {cash.priorFrom} to {cash.priorTo}. From the customer receipts file. Each payment line is counted one time.
       </p>
       <div className="mt-2 grid grid-cols-2 gap-[10px] md:gap-[14px] min-[1000px]:grid-cols-4">
         {[
           { label: "Collected this year", value: jod(cash.ytd), note: `${signedPct(cash.growth)} vs last year (${jod(cash.priorYtd)})` },
           { label: "Last 30 days", value: jod(cash.last30), note: "Up to today" },
-          { label: "Not linked to an invoice", value: jod(cash.unlinkedYtd), note: "Included in the total above" },
+          { label: "Not linked to an invoice", value: jod(cash.unlinkedYtd), note: "Money received but not matched to an invoice. It is already in the total above" },
         ].map((x) => (
           <div key={x.label} className="rounded-[9px] border border-line bg-white p-[15px] md:p-[21px]">
             <p className="text-[11px] text-muted md:text-xs">{x.label}</p>

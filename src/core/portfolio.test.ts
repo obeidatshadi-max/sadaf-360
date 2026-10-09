@@ -32,7 +32,7 @@ describe("buildPortfolio", () => {
 
   it("calls broad growth Growing and flags growth that rests on one customer", () => {
     expect(area("Respiratory")).toMatchObject({ signal: "Growing", growth: 0.5, customers: 3, topCustomer: "A" });
-    expect(area("Surgery")).toMatchObject({ signal: "Growth rests on one customer", topCustomer: "D" });
+    expect(area("Surgery")).toMatchObject({ signal: "Growth comes from one customer", topCustomer: "D" });
     expect(area("Surgery").topCustomerShare).toBeCloseTo(0.9);
   });
   it("labels decline, flat and too-small areas", () => {
@@ -68,7 +68,7 @@ describe("nextStep", () => {
     expect(nextStep({ signal: "Growing", thinCoverage: false })).toMatch(/sufficient/);
   });
   it("never suggests new range for one-customer growth or decline", () => {
-    expect(nextStep({ signal: "Growth rests on one customer", thinCoverage: true })).toMatch(/repeat/);
+    expect(nextStep({ signal: "Growth comes from one customer", thinCoverage: true })).toMatch(/repeat/);
     expect(nextStep({ signal: "Declining", thinCoverage: true })).toMatch(/Find out why/);
   });
 });

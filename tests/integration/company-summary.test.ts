@@ -128,7 +128,7 @@ describe("companyDataSummary", () => {
     const r = await companyPortfolio(a, TODAY);
     expect(r!.totalSales).toBe(30);
     const by = (n: string) => r!.areas.find((x) => x.area === n)!;
-    expect(by("Respiratory")).toMatchObject({ sales: 10, growth: "Data missing", signal: "No last-year base" });
+    expect(by("Respiratory")).toMatchObject({ sales: 10, growth: "Data missing", signal: "No sales last year" });
     expect(by("Area not set").sales).toBe(20);
     expect(r!.unclassifiedShare).toBeCloseTo(20 / 30);
     expect(by("Respiratory").bySegment[0]!.segment).toBe("Not classified");

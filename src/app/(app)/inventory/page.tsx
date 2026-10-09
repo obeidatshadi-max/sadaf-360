@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Glossary } from "@/components/glossary";
 import { PageHeading } from "@/components/page-heading";
 import { EXPIRY_WINDOW_DAYS, SLOW_COVER_DAYS } from "@/core/stock-risk";
 import { requireUser } from "@/lib/auth/current-user";
@@ -12,13 +13,13 @@ const n = (v: number) => v.toLocaleString("en-US");
 export default async function InventoryPage() {
   const user = await requireUser();
   if (user.guest) {
-    return <PageHeading eyebrow="Inventory & supply" title="Stock risk" sub="Sign in as a company user to see stock risk from imported data." />;
+    return <PageHeading eyebrow="Inventory & supply" title="Stock risk" sub="Please sign in with a company account to see this page. It uses the data you imported." />;
   }
   const r = await companyStockRisk(user.companyId);
   if (!r) {
     return (
       <div>
-        <PageHeading eyebrow={`${user.companyName} · Inventory & supply`} title="Stock risk" sub="No stock file has been imported yet. Import the Stock by batch export (E06) to see slow-moving and near-expiry stock." />
+        <PageHeading eyebrow={`${user.companyName} · Inventory & supply`} title="Stock risk" sub="You have not imported the stock file yet. Import it (file E06) to see slow stock and stock that may expire." />
         {user.role === "owner" ? (
           <a href="/imports" className="rounded-[7px] bg-brand px-4 py-2 text-sm font-semibold text-brand-ink hover:bg-[#125747]">
             Import data
@@ -31,9 +32,9 @@ export default async function InventoryPage() {
   const shortHistory = r.historyDays === null || r.historyDays < 90;
   const stats = [
     { label: "Stock value (owned)", value: jod(r.stockValue), note: `${n(r.rows)} stock rows as of ${r.asOf}` },
-    { label: "Slow or unused stock", value: jod(r.slowValue), note: `No use in ${r.windowDays} days, or over ${SLOW_COVER_DAYS} days of cover` },
-    { label: "Expired stock", value: jod(r.expiredValue), note: "At cost, still on the shelf" },
-    { label: "Expiry loss, estimated", value: jod(r.expiryLossEstimate), note: `Not sellable before expiry, next ${EXPIRY_WINDOW_DAYS} days` },
+    { label: "Slow or unused stock", value: jod(r.slowValue), note: `Not used in ${r.windowDays} days, or more than ${SLOW_COVER_DAYS} days of stock left at the current speed of sales` },
+    { label: "Expired stock", value: jod(r.expiredValue), note: "Past the expiry date, still in stock (at cost)" },
+    { label: "Possible loss from expiry (estimate)", value: jod(r.expiryLossEstimate), note: `Stock we may not sell before it expires, in the next ${EXPIRY_WINDOW_DAYS} days` },
   ];
 
   return (
@@ -41,11 +42,11 @@ export default async function InventoryPage() {
       <PageHeading
         eyebrow={`${user.companyName} · Inventory & supply`}
         title="Stock risk"
-        sub={`Owned stock only, valued at unit cost, from the stock snapshot of ${r.asOf}. Demand is the average daily customer issues over the ${r.windowDays} days before it.`}
+        sub={`Only stock that you own, valued at what it cost to buy, from the stock file of ${r.asOf}. To measure demand, we use the average number of units sent to customers each day in the ${r.windowDays} days before that date.`}
       />
       {shortHistory ? (
         <p className="mb-4 rounded-lg border border-line bg-white p-3 text-xs text-muted" role="note">
-          {r.historyDays === null ? "No stock issues have been imported." : `Only ${r.historyDays} days of stock issues have been imported.`} Cover and expiry estimates need about 90 days or more of issues to be reliable; until then products may be shown as unused when they are not.
+          {r.historyDays === null ? "No stock issues have been imported." : `Only ${r.historyDays} days of stock issues have been imported.`} These estimates need about 90 days or more of history to be reliable. Until then, a product may look unused when it is not.
         </p>
       ) : null}
       <div className="grid grid-cols-2 gap-[10px] md:gap-[14px] min-[1000px]:grid-cols-4">
@@ -58,12 +59,12 @@ export default async function InventoryPage() {
         ))}
       </div>
       <p className="mt-2 text-xs text-muted">
-        Slow stock and expiry loss overlap, so do not add them together.
-        {r.rowsWithoutCost > 0 ? ` ${r.rowsWithoutCost} stock row${r.rowsWithoutCost === 1 ? " has" : "s have"} no unit cost and ${r.rowsWithoutCost === 1 ? "is" : "are"} left out of every value above.` : ""}
+        Slow stock and expiry loss can include the same products, so do not add them together.
+        {r.rowsWithoutCost > 0 ? ` ${r.rowsWithoutCost} stock row${r.rowsWithoutCost === 1 ? " has" : "s have"} no unit cost, so ${r.rowsWithoutCost === 1 ? "it is" : "they are"} left out of every value above.` : ""}
       </p>
 
       <section aria-label="Slow stock" className="mt-6">
-        <h2 className="text-sm font-semibold">Largest slow or unused stock</h2>
+        <h2 className="text-sm font-semibold">Biggest slow or unused stock</h2>
         {r.slowProducts.length === 0 ? (
           <p className="mt-2 text-sm text-muted">None.</p>
         ) : (
@@ -75,7 +76,7 @@ export default async function InventoryPage() {
                   <th className="px-3 py-2 font-medium">Line</th>
                   <th className="px-3 py-2 text-right font-medium">Quantity</th>
                   <th className="px-3 py-2 text-right font-medium">Value</th>
-                  <th className="px-3 py-2 text-right font-medium">Cover</th>
+                  <th className="px-3 py-2 text-right font-medium">Days of stock left</th>
                 </tr>
               </thead>
               <tbody>
@@ -97,9 +98,9 @@ export default async function InventoryPage() {
       </section>
 
       <section aria-label="Expiry risk" className="mt-6">
-        <h2 className="text-sm font-semibold">Batches at expiry risk (estimated)</h2>
+        <h2 className="text-sm font-semibold">Batches that may expire before they are sold (estimate)</h2>
         {r.expiryRisks.length === 0 ? (
-          <p className="mt-2 text-sm text-muted">No batch expires within {EXPIRY_WINDOW_DAYS} days with stock left over.</p>
+          <p className="mt-2 text-sm text-muted">No batch will expire in the next {EXPIRY_WINDOW_DAYS} days with stock left over.</p>
         ) : (
           <div className="mt-2 overflow-x-auto rounded-lg border border-line bg-white">
             <table className="w-full text-left text-sm">
@@ -109,8 +110,8 @@ export default async function InventoryPage() {
                   <th className="px-3 py-2 font-medium">Batch</th>
                   <th className="px-3 py-2 font-medium">Expires</th>
                   <th className="px-3 py-2 text-right font-medium">Quantity</th>
-                  <th className="px-3 py-2 text-right font-medium">Unsold at expiry</th>
-                  <th className="px-3 py-2 text-right font-medium">Est. loss</th>
+                  <th className="px-3 py-2 text-right font-medium">Not sold by expiry</th>
+                  <th className="px-3 py-2 text-right font-medium">Possible loss</th>
                 </tr>
               </thead>
               <tbody>
@@ -132,8 +133,9 @@ export default async function InventoryPage() {
             </table>
           </div>
         )}
-        <p className="mt-1.5 text-xs text-muted">Estimate, not a confirmed loss: it assumes demand stays at the recent average and the earliest-expiring batch sells first.</p>
+        <p className="mt-1.5 text-xs text-muted">This is an estimate, not a confirmed loss. It assumes sales stay at the recent average and the batch that expires first is sold first.</p>
       </section>
+      <Glossary page="inventory" />
     </div>
   );
 }

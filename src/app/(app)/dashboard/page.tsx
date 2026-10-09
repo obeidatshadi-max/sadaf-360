@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Glossary } from "@/components/glossary";
 import { PageHeading } from "@/components/page-heading";
 import { requireUser } from "@/lib/auth/current-user";
 import { businessToday } from "@/lib/business-date";
@@ -31,39 +32,39 @@ export default async function DashboardPage() {
   const t = sales.total;
   const headline: { label: string; value: string; note: string; href: string }[] = [
     {
-      label: "Sales this year",
+      label: "Sales this year so far",
       value: d.invoices > 0 ? jod(t.sales) : "—",
-      note: d.invoices > 0 ? `${signedPct(t.growth)} vs same dates last year` : "No sales imported yet",
+      note: d.invoices > 0 ? `${signedPct(t.growth)} compared with the same dates last year` : "No sales imported yet",
       href: "/finance",
     },
     {
       label: "Gross margin",
       value: pct(t.margin, 1),
-      note: typeof t.costCoverage === "number" ? `Cost known for ${pct(t.costCoverage)} of sales` : "Needs sales with cost",
+      note: typeof t.costCoverage === "number" ? `Product cost is known for ${pct(t.costCoverage)} of sales` : "Needs sales that include product cost",
       href: "/finance",
     },
     {
-      label: "Cash collected this year",
+      label: "Cash collected this year so far",
       value: cash ? jod(cash.ytd) : "—",
-      note: cash ? `${signedPct(cash.growth)} vs same dates last year` : "No receipts imported yet",
+      note: cash ? `${signedPct(cash.growth)} compared with the same dates last year` : "No receipts imported yet",
       href: "/finance",
     },
     {
-      label: "Overdue receivables",
+      label: "Overdue payments from customers",
       value: ar ? jod(ar.overdue) : "—",
-      note: ar ? `of ${jod(ar.total)} unpaid, as of ${ar.asOf}${ar.dueDateMissing.invoices > 0 ? `; ${ar.dueDateMissing.invoices} invoice${ar.dueDateMissing.invoices === 1 ? "" : "s"} have no due date` : ""}` : "No unpaid-invoice file yet",
+      note: ar ? `of ${jod(ar.total)} unpaid, on ${ar.asOf}${ar.dueDateMissing.invoices > 0 ? `; ${ar.dueDateMissing.invoices} invoice${ar.dueDateMissing.invoices === 1 ? "" : "s"} have no due date` : ""}` : "No unpaid-invoices file yet",
       href: "/finance",
     },
     {
       label: "Slow or unused stock",
       value: stock ? jod(stock.slowValue) : "—",
-      note: stock ? `of ${jod(stock.stockValue)} owned stock, as of ${stock.asOf}` : "No stock file yet",
+      note: stock ? `of ${jod(stock.stockValue)} stock that you own, on ${stock.asOf}` : "No stock file yet",
       href: "/inventory",
     },
     {
-      label: "Expiry loss, estimated",
+      label: "Possible loss from expiry (estimate)",
       value: stock ? jod(stock.expiryLossEstimate) : "—",
-      note: stock ? `${jod(stock.expiredValue)} already expired. Estimate, overlaps slow stock` : "No stock file yet",
+      note: stock ? `${jod(stock.expiredValue)} already expired. Estimate. It can include the same products as slow stock` : "No stock file yet",
       href: "/inventory",
     },
   ];
@@ -89,8 +90,8 @@ export default async function DashboardPage() {
         title="Owner overview"
         sub={
           empty
-            ? "No data has been imported yet. Import the Alpha ERP exports first (products, customers, sales, receipts, unpaid invoices, stock)."
-            : "Worked out from the Alpha ERP files imported so far. Every figure names its period or as-of date; a dash means the file or data it needs is missing. Click a tile for the detail."
+            ? "You have not imported any data yet. First import the Alpha ERP files: products, customers, sales, receipts, unpaid invoices and stock."
+            : "Worked out from the Alpha ERP files you imported. Every number shows its period or date. A dash (—) means we need a file or data that is missing. Click a tile to see more."
         }
       />
       <div className="mb-8 grid grid-cols-2 gap-[10px] md:gap-[14px] min-[1000px]:grid-cols-3">
@@ -102,7 +103,7 @@ export default async function DashboardPage() {
           </a>
         ))}
       </div>
-      <h2 className="mb-3 text-sm font-semibold">Data loaded</h2>
+      <h2 className="mb-3 text-sm font-semibold">Data you have loaded</h2>
       <div className="grid grid-cols-2 gap-[10px] md:gap-[14px] min-[1000px]:grid-cols-4">
         {stats.map((s) => (
           <div key={s.label} className="rounded-[9px] border border-line bg-white p-[15px] md:p-[21px]">
@@ -122,6 +123,7 @@ export default async function DashboardPage() {
           Explore with sample data
         </a>
       </div>
+      <Glossary page="overview" />
     </div>
   );
 }

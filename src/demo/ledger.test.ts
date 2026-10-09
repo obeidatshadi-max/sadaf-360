@@ -46,7 +46,7 @@ describe("demo portfolio agrees with the demo's headline figures", () => {
   it("tells broad growth, one-customer growth, decline and stable apart", () => {
     expect(area("Respiratory").signal).toBe("Growing");
     expect(area("Infusion and critical care").signal).toBe("Growing");
-    expect(area("Surgery and electrosurgery").signal).toBe("Growth rests on one customer");
+    expect(area("Surgery and electrosurgery").signal).toBe("Growth comes from one customer");
     expect(area("Neurology and psychiatry").signal).toBe("Declining");
     expect(area("Wound care").signal).toBe("Stable");
   });

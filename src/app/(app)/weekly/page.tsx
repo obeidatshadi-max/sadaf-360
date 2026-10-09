@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Glossary } from "@/components/glossary";
 import { PageHeading } from "@/components/page-heading";
 import type { Change } from "@/core/weekly";
 import { requireUser } from "@/lib/auth/current-user";
@@ -29,7 +30,7 @@ function Tile({ label, c, money, note }: { label: string; c: Change; money: bool
 export default async function WeeklyPage() {
   const user = await requireUser();
   if (user.guest) {
-    return <PageHeading eyebrow="Data & update routine" title="Weekly summary" sub="Sign in as a company user to see what changed this week in your imported data." />;
+    return <PageHeading eyebrow="Data & update routine" title="Weekly summary" sub="Please sign in with a company account to see this page. It shows what changed this week in the data you imported." />;
   }
   const w = await companyWeekly(user.companyId, businessToday());
   const { thisFrom, thisTo, prevFrom, prevTo } = w.windows;
@@ -40,17 +41,17 @@ export default async function WeeklyPage() {
       <PageHeading
         eyebrow={`${user.companyName} · Data & update routine`}
         title="Weekly summary"
-        sub={`What changed in the last 7 days (${thisFrom} to ${thisTo}) against the 7 before (${prevFrom} to ${prevTo}), from the files imported so far. It is only as current as the last import.`}
+        sub={`What changed in the last 7 days (${thisFrom} to ${thisTo}) compared with the 7 days before (${prevFrom} to ${prevTo}). It uses the files you imported. It is only as new as your last import.`}
       />
       {nothing ? (
         <p className="mb-4 rounded-lg border border-line bg-white p-3 text-xs text-muted" role="note">
-          No sales or cash fall in these two weeks. Either nothing happened or the latest export has not been imported yet, so check the import dates below before reading the zeros.
+          There are no sales or payments in these two weeks. Maybe nothing happened, or maybe you have not imported the latest files yet. Check the import dates below before you trust these zeros.
         </p>
       ) : null}
       <div className="grid grid-cols-2 gap-[10px] md:gap-[14px] min-[1000px]:grid-cols-3">
-        <Tile label="Sales" c={w.sales} money note="Net of tax, returns deducted" />
-        <Tile label="Cash collected" c={w.cash} money note="Customer receipts" />
-        <Tile label="Invoices issued" c={w.orders} money={false} note="Invoices with positive sales" />
+        <Tile label="Sales" c={w.sales} money note="Without tax, after taking off returns" />
+        <Tile label="Cash collected" c={w.cash} money note="Money received from customers" />
+        <Tile label="Invoices issued" c={w.orders} money={false} note="Invoices with sales above zero" />
       </div>
 
       <section aria-label="Overdue receivables" className="mt-6">
@@ -58,15 +59,15 @@ export default async function WeeklyPage() {
         {w.overdue ? (
           <p className="mt-1 text-sm">
             {jod(w.overdue.now.now)} overdue as of {w.overdue.nowAsOf}, {w.overdue.now.delta >= 0 ? "up" : "down"} {jod(Math.abs(w.overdue.now.delta))} from {jod(w.overdue.now.before)} as of {w.overdue.beforeAsOf}.
-            <span className="text-xs text-muted"> Compared snapshot to snapshot, not week to week.</span>
+            <span className="text-xs text-muted"> This compares two unpaid-invoice files, not two weeks.</span>
           </p>
         ) : (
-          <p className="mt-1 text-sm text-muted">Needs two unpaid-invoice imports on different dates to show a change.</p>
+          <p className="mt-1 text-sm text-muted">To show a change, we need two unpaid-invoice files from two different dates.</p>
         )}
       </section>
 
       <section aria-label="Top customers this week" className="mt-6">
-        <h2 className="text-sm font-semibold">Biggest customers this week</h2>
+        <h2 className="text-sm font-semibold">Customers who bought the most this week</h2>
         {w.topCustomers.length === 0 ? (
           <p className="mt-1 text-sm text-muted">No sales in the last 7 days.</p>
         ) : (
@@ -90,7 +91,7 @@ export default async function WeeklyPage() {
       <section aria-label="Imports this week" className="mt-6">
         <h2 className="text-sm font-semibold">Files imported in the last 7 days</h2>
         {w.importsThisWeek.length === 0 ? (
-          <p className="mt-1 text-sm text-muted">None. The figures above may be out of date.</p>
+          <p className="mt-1 text-sm text-muted">None. The numbers above may be old.</p>
         ) : (
           <ul className="mt-1 text-sm">
             {w.importsThisWeek.map((i) => (
@@ -101,6 +102,7 @@ export default async function WeeklyPage() {
           </ul>
         )}
       </section>
+      <Glossary page="weekly" />
     </div>
   );
 }

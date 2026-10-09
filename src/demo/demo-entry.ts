@@ -5,3 +5,5 @@
 export { PERIOD_DAYS, VIEWS, privateInsights, segmentComparison, summarizeAccountRows, tenderBoard, viewRows, viewSummary } from "./accounts";
 export { demoLedger, demoPortfolio } from "./ledger";
 export { nextStep } from "@/core/portfolio";
+export { GLOSSARY, PAGE_TERMS } from "@/core/glossary";
+export { LEVEL_LABEL } from "@/core/opportunities";
