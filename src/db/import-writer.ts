@@ -234,6 +234,7 @@ async function write(tx: Tx, companyId: string, batchId: string, kind: ImportKin
               code: str(r.values.code),
               name: str(r.values.name),
               line: str(r.values.line) as (typeof products.$inferInsert)["line"],
+              therapeuticArea: strOrNull(r.values.therapeuticArea),
               manufacturer: strOrNull(r.values.manufacturer),
               supplierCode: strOrNull(r.values.supplierCode),
               supplierName: strOrNull(r.values.supplierName),
@@ -249,6 +250,8 @@ async function write(tx: Tx, companyId: string, batchId: string, kind: ImportKin
             set: {
               name: ex(products.name),
               line: ex(products.line),
+              // Kept when a later file has no area column, so a hand-filled area is not wiped by an ERP re-import.
+              therapeuticArea: sql`coalesce(excluded."therapeutic_area", ${products.therapeuticArea})`,
               manufacturer: ex(products.manufacturer),
               supplierCode: ex(products.supplierCode),
               supplierName: ex(products.supplierName),

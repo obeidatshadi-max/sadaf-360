@@ -1,0 +1,1 @@
+ALTER TABLE "products" ADD COLUMN "therapeutic_area" varchar(100);

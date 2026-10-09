@@ -149,6 +149,8 @@ export const products = pgTable(
     code: varchar("code", { length: 80 }).notNull(),
     name: varchar("name", { length: 300 }).notNull(),
     line: productLine("line").notNull(),
+    /** Clinical / therapeutic area (for example "Respiratory"). NULL until the ERP or the owner supplies it; never defaulted. */
+    therapeuticArea: varchar("therapeutic_area", { length: 100 }),
     manufacturer: varchar("manufacturer", { length: 200 }),
     supplierCode: varchar("supplier_code", { length: 80 }),
     supplierName: varchar("supplier_name", { length: 200 }),

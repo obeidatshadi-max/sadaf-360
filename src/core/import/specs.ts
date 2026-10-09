@@ -130,6 +130,7 @@ export const SPECS: Record<ImportKind, FileSpec> = {
       f("code", ["product code", "item code", "code", "sku", "item no", "product id", "رقم الصنف"], true, code(80)),
       f("name", ["product name", "item name", "name", "description", "اسم الصنف"], true, text(300)),
       f("line", ["category", "product line", "line", "product category", "type", "الفئة"], true, productLine),
+      f("therapeuticArea", ["therapeutic area", "clinical area", "therapy area", "specialty", "speciality", "المجال العلاجي"], false, text(100)),
       f("manufacturer", ["manufacturer", "maker", "brand"], false, text(200)),
       f("supplierCode", ["supplier code", "supplier id", "vendor code"], false, code(80)),
       f("supplierName", ["supplier name", "supplier", "vendor", "vendor name"], false, text(200)),
