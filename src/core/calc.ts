@@ -9,12 +9,28 @@ export type Unavailable = 'Data missing' | 'No recent use' | 'No target';
 const DAY_MS = 86_400_000;
 const AVG_DAYS_PER_MONTH = 30.4375;
 
-/** Whole days from `from` to `to` (UTC dates, time ignored). */
+/** True only for a real calendar date written YYYY-MM-DD (rejects 2026-02-30 and free text). */
+export function isIsoDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const t = Date.parse(`${value}T00:00:00Z`);
+  return !Number.isNaN(t) && new Date(t).toISOString().slice(0, 10) === value;
+}
+
+function assertDate(value: string, label: string): void {
+  if (!isIsoDate(value)) throw new RangeError(`${label} is not a valid YYYY-MM-DD date: "${value}"`);
+}
+
+/** JOD has 1,000 fils: round money to 3 decimals so float noise (172.79999999999998) never reaches a report. */
+export const roundJod = (n: number): number => Math.round((n + Number.EPSILON) * 1000) / 1000;
+
+/** Whole days from `from` to `to` (UTC dates, time ignored). Throws on an invalid date instead of returning NaN. */
 export function daysBetween(from: string, to: string): number {
+  assertDate(from, "from");
+  assertDate(to, "to");
   return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / DAY_MS);
 }
 
-export const grossProfit = (sales: number, productCost: number) => sales - productCost;
+export const grossProfit = (sales: number, productCost: number) => roundJod(sales - productCost);
 
 export function grossMargin(sales: number, productCost: number): number | Unavailable {
   return sales === 0 ? 'Data missing' : (sales - productCost) / sales;
@@ -48,15 +64,16 @@ export function receivablesAging(invoices: OpenInvoice[], asOf: string) {
     if (inv.outstanding <= 0) continue;
     buckets[agingBucket(daysBetween(inv.dueDate, asOf))] += inv.outstanding;
   }
-  const total = AGING_BUCKETS.reduce((s, b) => s + buckets[b], 0);
-  const overdue = total - buckets['Not due'];
+  for (const b of AGING_BUCKETS) buckets[b] = roundJod(buckets[b]);
+  const total = roundJod(AGING_BUCKETS.reduce((s, b) => s + buckets[b], 0));
+  const overdue = roundJod(total - buckets['Not due']);
   return { buckets, total, overdue };
 }
 
-export const stockValue = (qty: number, unitCost: number) => qty * unitCost;
+export const stockValue = (qty: number, unitCost: number) => roundJod(qty * unitCost);
 
 export function stockCoverDays(qty: number, avgDailyIssues: number): number | Unavailable {
-  return avgDailyIssues === 0 ? 'No recent use' : qty / avgDailyIssues;
+  return avgDailyIssues <= 0 ? 'No recent use' : qty / avgDailyIssues;
 }
 
 /**
@@ -65,14 +82,16 @@ export function stockCoverDays(qty: number, avgDailyIssues: number): number | Un
  */
 export function unsoldAtExpiry(qty: number, avgDailyIssues: number, expiry: string, asOf: string): number {
   const daysLeft = Math.max(0, daysBetween(asOf, expiry));
-  return Math.max(0, qty - Math.floor(daysLeft * avgDailyIssues));
+  const sellable = Math.floor(daysLeft * Math.max(0, avgDailyIssues));
+  return Math.max(0, qty - sellable);
 }
 
 /** Estimated, not confirmed, loss. Overlaps with slow-stock value; never add the two. */
-export const expiryLoss = (unsold: number, unitCost: number) => unsold * unitCost;
+export const expiryLoss = (unsold: number, unitCost: number) => roundJod(unsold * unitCost);
 
+/** Average daily issues implied by a stock cover in months. Zero cover means no usable demand figure: returns 0. */
 export const dailyIssuesFromCover = (qty: number, coverMonths: number) =>
-  qty / (coverMonths * AVG_DAYS_PER_MONTH);
+  coverMonths > 0 ? qty / (coverMonths * AVG_DAYS_PER_MONTH) : 0;
 
 export interface MonthlyUnitInput {
   activityCount: number;
@@ -84,13 +103,13 @@ export interface MonthlyUnitInput {
 /** Estimated demand vs purchases for one unit-month. A gap is an investigation, not a confirmed loss. */
 export function purchaseGap(i: MonthlyUnitInput) {
   const expectedQty = i.activityCount * i.consumablesPerActivity;
-  const expectedValue = expectedQty * i.referencePrice;
-  const purchasedValue = i.purchasedQty * i.referencePrice;
+  const expectedValue = roundJod(expectedQty * i.referencePrice);
+  const purchasedValue = roundJod(i.purchasedQty * i.referencePrice);
   return {
     expectedQty,
     expectedValue,
     purchasedValue,
-    gap: expectedValue - purchasedValue,
+    gap: roundJod(expectedValue - purchasedValue),
     capture: expectedQty === 0 ? ('Data missing' as const) : i.purchasedQty / expectedQty,
   };
 }
@@ -109,8 +128,8 @@ export function equipmentUseRate(activity: number, practicalCapacity: number): n
 
 /** Scenario only: monthly gap x assumed share won x 12. Overlapping signals must not be summed. */
 export function repeatScenario(monthlyGap: number, shareWon: number, margin: number) {
-  const extraSales = Math.max(0, monthlyGap) * shareWon * 12;
-  return { extraSales, extraProfit: extraSales * margin };
+  const extraSales = roundJod(Math.max(0, monthlyGap) * shareWon * 12);
+  return { extraSales, extraProfit: roundJod(extraSales * margin) };
 }
 
 export interface Tender {
@@ -118,7 +137,7 @@ export interface Tender {
   plannedCost: number;
 }
 
-export const plannedTenderProfit = (t: Tender) => t.value - t.plannedCost;
+export const plannedTenderProfit = (t: Tender) => roundJod(t.value - t.plannedCost);
 
 /** Weighted margin = total planned profit / total value. */
 export function weightedTenderMargin(tenders: Tender[]): number | Unavailable {
@@ -133,9 +152,9 @@ export function weightedTenderMargin(tenders: Tender[]): number | Unavailable {
  */
 export function tenderCostSplit(value: number, lineGrossMargin: number, plannedMargin: number) {
   return {
-    productCost: value * (1 - lineGrossMargin),
-    fulfillment: value * (lineGrossMargin - plannedMargin),
-    contribution: value * plannedMargin,
+    productCost: roundJod(value * (1 - lineGrossMargin)),
+    fulfillment: roundJod(value * (lineGrossMargin - plannedMargin)),
+    contribution: roundJod(value * plannedMargin),
   };
 }
 
@@ -148,7 +167,8 @@ export type AgreementStatus = 'No contract' | 'Data missing' | 'Not started' | '
 
 export function agreementStatus(a: Agreement, asOf: string, renewalWarningDays = 30): AgreementStatus {
   if (a.held === 'No') return 'No contract';
-  if (a.held !== 'Yes' || !a.start || !a.end) return 'Data missing';
+  if (a.held !== 'Yes' || !a.start || !a.end || !isIsoDate(a.start) || !isIsoDate(a.end)) return 'Data missing';
+  assertDate(asOf, 'asOf');
   if (a.start > asOf) return 'Not started';
   if (a.end < asOf) return 'Expired';
   if (daysBetween(asOf, a.end) <= renewalWarningDays) return 'Renewal due';
@@ -161,7 +181,8 @@ export const isCovered = (s: AgreementStatus): 1 | 0 | 'Data missing' =>
 
 /** Review signal only, not a replacement requirement. */
 export function ageReview(installed: string | undefined, asOf: string, thresholdYears = 5): 'Review age' | 'Below threshold' | 'Data missing' {
-  if (!installed) return 'Data missing';
+  if (!installed || !isIsoDate(installed)) return 'Data missing';
+  assertDate(asOf, 'asOf');
   const d = new Date(`${installed}T00:00:00Z`);
   d.setUTCFullYear(d.getUTCFullYear() + thresholdYears);
   return d.toISOString().slice(0, 10) <= asOf ? 'Review age' : 'Below threshold';
@@ -169,4 +190,4 @@ export function ageReview(installed: string | undefined, asOf: string, threshold
 
 /** Attainment against a target for the SAME scope and month (never a project vs a category target). */
 export const attainment = (actual: number, target: number): number | Unavailable =>
-  target === 0 ? 'No target' : actual / target;
+  target <= 0 ? 'No target' : actual / target;

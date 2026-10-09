@@ -112,3 +112,67 @@ describe('advanced reports', () => {
     expect(c.attainment(5, 0)).toBe('No target');
   });
 });
+
+describe('input validation and edge cases', () => {
+  it('rejects impossible calendar dates instead of returning NaN', () => {
+    expect(c.isIsoDate('2026-02-28')).toBe(true);
+    expect(c.isIsoDate('2026-02-30')).toBe(false);
+    expect(c.isIsoDate('08/10/2026')).toBe(false);
+    expect(() => c.daysBetween('2026-02-30', ASOF)).toThrow(RangeError);
+    expect(() => c.daysOverdue(100, 'not a date', ASOF)).toThrow(RangeError);
+  });
+  it('already-expired batch is entirely unsold', () => {
+    expect(c.unsoldAtExpiry(50, 10, '2026-09-01', ASOF)).toBe(50);
+  });
+  it('no or negative demand leaves the whole batch unsold and never divides by zero', () => {
+    expect(c.unsoldAtExpiry(50, 0, '2027-12-31', ASOF)).toBe(50);
+    expect(c.unsoldAtExpiry(50, -3, '2027-12-31', ASOF)).toBe(50);
+    expect(c.dailyIssuesFromCover(50, 0)).toBe(0);
+    expect(c.stockCoverDays(50, -1)).toBe('No recent use');
+  });
+  it('money is rounded to fils, never float noise', () => {
+    expect(c.roundJod(172.79999999999998)).toBe(172.8);
+    expect(c.roundJod(0.1 + 0.2)).toBe(0.3);
+    expect(c.repeatScenario(120, 0.4, 0.3).extraProfit).toBe(172.8);
+    expect(c.stockValue(600, 1.8)).toBe(1080);
+  });
+  it('aging: overdue = total - not due, negative balances are ignored', () => {
+    const r = c.receivablesAging(
+      [
+        { outstanding: 100.1, dueDate: '2026-10-08' },
+        { outstanding: 200.2, dueDate: '2026-10-07' },
+        { outstanding: -50, dueDate: '2026-01-01' },
+      ],
+      ASOF,
+    );
+    expect(r.buckets['Not due']).toBe(100.1);
+    expect(r.buckets['1-30']).toBe(200.2);
+    expect(r.total).toBe(300.3);
+    expect(r.overdue).toBe(200.2);
+  });
+  it('bucket boundaries', () => {
+    expect(c.agingBucket(0)).toBe('Not due');
+    expect(c.agingBucket(1)).toBe('1-30');
+    expect(c.agingBucket(30)).toBe('1-30');
+    expect(c.agingBucket(31)).toBe('31-60');
+    expect(c.agingBucket(90)).toBe('61-90');
+    expect(c.agingBucket(91)).toBe('90+');
+  });
+  it('agreement boundaries: renewal window edge and invalid dates', () => {
+    expect(c.agreementStatus({ held: 'Yes', start: '2026-01-01', end: '2026-11-07' }, ASOF)).toBe('Renewal due');
+    expect(c.agreementStatus({ held: 'Yes', start: '2026-01-01', end: '2026-11-08' }, ASOF)).toBe('Active');
+    expect(c.agreementStatus({ held: 'Yes', start: '2026-01-01', end: '2026-10-08' }, ASOF)).toBe('Renewal due');
+    expect(c.agreementStatus({ held: 'Yes', start: 'x', end: '2027-01-01' }, ASOF)).toBe('Data missing');
+  });
+  it('age review: threshold day and leap day', () => {
+    expect(c.ageReview('2021-10-08', ASOF)).toBe('Review age');
+    expect(c.ageReview('2021-10-09', ASOF)).toBe('Below threshold');
+    expect(c.ageReview('2024-02-29', '2029-03-01')).toBe('Review age');
+    expect(c.ageReview('2024-02-29', '2029-02-28')).toBe('Below threshold');
+    expect(c.ageReview('bad', ASOF)).toBe('Data missing');
+  });
+  it('tender margin: zero-value and mixed lists', () => {
+    expect(c.weightedTenderMargin([{ value: 0, plannedCost: 0 }])).toBe('Data missing');
+    expect(c.weightedTenderMargin([{ value: 100, plannedCost: 120 }])).toBeCloseTo(-0.2);
+  });
+});

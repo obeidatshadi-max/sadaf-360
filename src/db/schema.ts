@@ -5,7 +5,7 @@
  * Money is JOD numeric(14,3) (the dinar has 1,000 fils). Dates that come from the ERP are `date`, not timestamps.
  */
 import { sql } from "drizzle-orm";
-import { boolean, index, jsonb, pgEnum, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { boolean, index, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
 
 export const userRole = pgEnum("user_role", ["owner", "admin", "viewer"]);
 
@@ -32,7 +32,8 @@ export const users = pgTable(
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index("users_company_idx").on(t.companyId), index("users_email_lower_idx").using("btree", sql`lower(${t.email})`)],
+  // One account per email address, case-insensitively: login, create-user and bootstrap all look users up by lower(email).
+  (t) => [index("users_company_idx").on(t.companyId), uniqueIndex("users_email_lower_uniq").using("btree", sql`lower(${t.email})`)],
 );
 
 export const auditLogs = pgTable(
