@@ -161,7 +161,7 @@ export function nextStep(a: Pick<AreaFigures, "signal" | "thinCoverage">): strin
     case "Growth comes from one customer":
       return "Check whether this customer's demand will repeat before adding range.";
     case "Declining":
-      return "Find out why: price, stock-outs or a lost customer.";
+      return "Find out why: price, items running out of stock, or a lost customer.";
     case "No sales last year":
       return "Wait for a full comparison period before judging.";
     case "Too small to judge":

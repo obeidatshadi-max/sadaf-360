@@ -77,7 +77,7 @@ export function stockRows() {
     totalValue: roundJod(rows.reduce((a, r) => a + r.value, 0)),
     // Estimated exposure; it overlaps with slow-stock value, so the two are never added together.
     expiryExposure: roundJod(rows.reduce((a, r) => a + r.expiryLoss, 0)),
-    stockOutFlags: rows.filter((r) => r.risk === "Stock-out risk").length,
+    stockOutFlags: rows.filter((r) => r.risk === "Running-out risk").length,
   };
 }
 

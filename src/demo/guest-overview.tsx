@@ -56,20 +56,20 @@ export function GuestOverview() {
         <p className="text-xs font-semibold uppercase tracking-wider text-brand">Sadaf Medical · Jordan · {DEMO_PERIOD}</p>
         <h1 className="mt-1 text-2xl font-medium tracking-tight">Owner overview</h1>
         <p className="mt-1 text-sm text-muted">
-          Synthetic demonstration data, snapshot {DEMO_AS_OF}. No real company figures. Estimates are labelled and need validation against Alpha ERP.
+          Made-up demonstration data, on {DEMO_AS_OF}. These are not real company figures. Estimates are labelled. Check them against Alpha ERP.
         </p>
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Tile label="Sales YTD" value={jodShort(t.sales)} note="Net revenue by business line" />
-        <Tile label="Gross profit" value={jodShort(t.grossProfit)} note={`${pct(t.margin, 1)} margin · before operating costs`} />
-        <Tile label="Cash collected YTD" value={jodShort(t.cashCollected)} note="Receipts may relate to prior-period sales" />
-        <Tile label="Overdue balances" value={jodShort(ar.overdue)} note="Sample of open invoices, not total receivables" />
+        <Tile label="Sales this year" value={jodShort(t.sales)} note="Sales without tax, by business line" />
+        <Tile label="Gross profit" value={jodShort(t.grossProfit)} note={`${pct(t.margin, 1)} margin · before running costs`} />
+        <Tile label="Cash received this year" value={jodShort(t.cashCollected)} note="Some payments may be for earlier sales" />
+        <Tile label="Overdue balances" value={jodShort(ar.overdue)} note="Sample of unpaid invoices, not the total owed" />
       </div>
 
-      <Panel title="Sales and margin by line" sub="Contribution = gross profit less direct fulfilment costs; excludes overhead, tax and finance.">
+      <Panel title="Sales and margin by line" sub="Profit after costs = gross profit minus direct delivery costs. It does not include company running costs, tax or loan costs.">
         <table className="w-full whitespace-nowrap">
-          <Head cols={["Line", "Sales YTD", "Gross profit", "Gross margin", "Direct costs", "Contribution", "Cash collected"]} />
+          <Head cols={["Line", "Sales this year", "Gross profit", "Gross margin", "Direct costs", "Profit after costs", "Cash received"]} />
           <tbody>
             {lr.map((r) => (
               <tr key={r.name} className="border-t border-line">
@@ -98,7 +98,7 @@ export function GuestOverview() {
       </Panel>
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <Panel title="Receivables aging" sub={`Sample open invoices, aged from the contractual due date at ${DEMO_AS_OF}.`}>
+        <Panel title="Unpaid invoices by age" sub={`Sample of unpaid invoices. Age is counted from the due date on ${DEMO_AS_OF}.`}>
           <table className="w-full">
             <Head cols={["Days past due", "Amount"]} />
             <tbody>
@@ -116,7 +116,7 @@ export function GuestOverview() {
           </table>
         </Panel>
 
-        <Panel title="Stock risk" sub="Expiry exposure = units demand cannot absorb before expiry × unit cost. An estimate, not a confirmed loss.">
+        <Panel title="Stock risk" sub="Possible loss from expiry = units we cannot sell before they expire × unit cost. It is an estimate, not a confirmed loss.">
           <table className="w-full whitespace-nowrap">
             <Head cols={["Product", "Value", "Cover (mo)", "Expiry", "Exposure"]} />
             <tbody>
@@ -145,8 +145,8 @@ export function GuestOverview() {
       </div>
 
       <Panel
-        title="Recurring consumables"
-        sub={`Installed-unit cohort (${sv.units} sample units). A gap of ${jod(rc.gap)} a month is an estimated purchasing gap to investigate, not a confirmed loss.`}
+        title="Repeat consumables"
+        sub={`Group of installed units (${sv.units} sample units). A gap of ${jod(rc.gap)} a month is an estimated gap in purchases to look into. It is not a confirmed loss.`}
       >
         <table className="w-full whitespace-nowrap">
           <Head cols={["Unit", "Account", "Expected / mo", "Actual / mo", "Capture", "Contract"]} />
@@ -177,13 +177,13 @@ export function GuestOverview() {
           </tbody>
         </table>
         <p className="mt-3 text-xs text-muted">
-          Scenario (assumptions, not a forecast): recovering {pct(SCENARIO.shareWon)} of the gap at {pct(SCENARIO.margin)} contribution margin adds about{" "}
-          {jod(rc.scenario.extraSales)} sales and {jod(rc.scenario.extraProfit)} contribution a year, if demand stays stable. {rc.lowCapture} units are below{" "}
-          {pct(LOW_CAPTURE)} capture.
+          Example (assumptions, not a forecast): if we win back {pct(SCENARIO.shareWon)} of the gap at a profit margin of {pct(SCENARIO.margin)}, we add about{" "}
+          {jod(rc.scenario.extraSales)} sales and {jod(rc.scenario.extraProfit)} profit a year, if demand stays the same. {rc.lowCapture} units buy less than{" "}
+          {pct(LOW_CAPTURE)} of the estimated need.
         </p>
       </Panel>
 
-      <Panel title="Tenders" sub={`Face value ${jodShort(tn.totalValue)}, weighted planned margin ${pct(tn.weightedMargin, 1)}. A tender is not revenue until booked.`}>
+      <Panel title="Tenders" sub={`Face value ${jodShort(tn.totalValue)}, average planned margin ${pct(tn.weightedMargin, 1)}. A tender is not sales until the contract is booked.`}>
         <table className="w-full whitespace-nowrap">
           <Head cols={["Tender", "Stage", "Value", "Planned margin", "Product cost", "Freight & install", "Attention"]} />
           <tbody>
@@ -209,7 +209,7 @@ export function GuestOverview() {
 
       <p className="text-xs text-muted">
         Gross profit = net sales − cost of goods; it excludes freight, installation, warranty, overhead and finance costs. Standalone consumable sales:{" "}
-        {jodShort(t.standaloneConsumables)} (not linked to installed units). Recurring consumables are booked once, in Consumables.
+        {jodShort(t.standaloneConsumables)} (not linked to installed units). Repeat consumables are counted once, in Consumables.
       </p>
     </div>
   );
