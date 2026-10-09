@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth/current-user";
 import { logoutAction } from "@/server/actions/auth";
 import { DashboardUpdateStatus } from "@/components/dashboard-update-status";
 import { DEMO_AS_OF } from "@/demo/dataset";
+import { lastImportText } from "@/lib/last-import";
 
 export default function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -14,6 +15,7 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
 
 async function Shell({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
+  const integration = user.guest ? undefined : await lastImportText(user.companyId);
   return (
     <div className="min-h-dvh">
       {user.guest ? (
@@ -41,7 +43,7 @@ async function Shell({ children }: { children: React.ReactNode }) {
           </form>
         )}
       </header>
-      <DashboardUpdateStatus sampleAsOf={user.guest ? DEMO_AS_OF : undefined} />
+      <DashboardUpdateStatus sampleAsOf={user.guest ? DEMO_AS_OF : undefined} integration={integration} />
       <nav aria-label="Main" className="flex gap-1 border-b border-line bg-surface px-4 text-sm">
         {[
           ["/dashboard", "Overview"],
