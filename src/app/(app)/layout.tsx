@@ -14,19 +14,30 @@ async function Shell({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
   return (
     <div className="min-h-dvh">
+      {user.guest ? (
+        <p className="bg-brand-soft px-5 py-2 text-center text-xs text-brand">
+          Open access: you are browsing as a guest. No company data is shown. <a className="underline" href="/login">Sign in</a>
+        </p>
+      ) : null}
       <header className="flex items-center justify-between gap-3 border-b border-line bg-surface px-5 py-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-brand">Sadaf 360</p>
           <p className="text-sm font-medium">{user.companyName}</p>
         </div>
-        <form action={logoutAction} className="flex items-center gap-3 text-sm">
-          <span className="text-muted">
-            {user.fullName} · {user.role}
-          </span>
-          <button type="submit" className="rounded-md border border-line px-3 py-1.5">
-            Sign out
-          </button>
-        </form>
+        {user.guest ? (
+          <a href="/login" className="rounded-md border border-line px-3 py-1.5 text-sm">
+            Sign in
+          </a>
+        ) : (
+          <form action={logoutAction} className="flex items-center gap-3 text-sm">
+            <span className="text-muted">
+              {user.fullName} · {user.role}
+            </span>
+            <button type="submit" className="rounded-md border border-line px-3 py-1.5">
+              Sign out
+            </button>
+          </form>
+        )}
       </header>
       <main className="mx-auto max-w-5xl px-5 py-8">{children}</main>
     </div>

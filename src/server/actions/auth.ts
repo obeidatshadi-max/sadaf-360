@@ -51,7 +51,7 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
 
 export async function logoutAction(): Promise<void> {
   const user = await getCurrentUser();
-  if (user) await writeAudit({ companyId: user.companyId, userId: user.id, action: "auth.logout" });
+  if (user && !user.guest) await writeAudit({ companyId: user.companyId, userId: user.id, action: "auth.logout" });
   await destroySession();
   redirect("/login");
 }
