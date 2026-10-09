@@ -73,6 +73,18 @@ describe("companyDataSummary", () => {
     expect(r).toMatchObject({ from: "2026-01-01", priorTo: "2025-10-09" });
   });
 
+  it("sums cash collected, counting unlinked cash once and showing it apart", async () => {
+    const { companyCash } = await import("@/lib/cash");
+    await client.exec(`insert into receipts (company_id, receipt_no, allocation_row_id, receipt_date, customer_id, invoice_id, allocated_amount)
+      select '${a}', 'R1', '1', '2026-10-05', c.id, i.id, 40 from customers c, invoices i where c.company_id = '${a}' and i.company_id = '${a}' limit 1`);
+    await client.exec(`insert into receipts (company_id, receipt_no, allocation_row_id, receipt_date, customer_id, invoice_id, allocated_amount)
+      select '${a}', 'R2', '1', '2026-02-10', c.id, null, 10 from customers c where c.company_id = '${a}' limit 1`);
+    const r = await companyCash(a, TODAY);
+    expect(r).toMatchObject({ ytd: 50, priorYtd: 0, last30: 40, unlinkedYtd: 10, growth: "Data missing" });
+    expect(r!.months.find((m) => m.month === "2026-02")!.amount).toBe(10);
+    expect(await companyCash(empty, TODAY)).toBeNull();
+  });
+
   it("reads an empty company as zeros with no snapshots", async () => {
     const { companyDataSummary } = await import("@/lib/company-data-summary");
     expect(await companyDataSummary(empty)).toMatchObject({ products: 0, invoices: 0, openInvoices: null, stock: null });

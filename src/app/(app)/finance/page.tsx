@@ -4,6 +4,7 @@ import { AGING_BUCKETS } from "@/core/receivables";
 import { requireUser } from "@/lib/auth/current-user";
 import { businessToday } from "@/lib/business-date";
 import { companyReceivables } from "@/lib/receivables";
+import { companyCash } from "@/lib/cash";
 import { companySalesByLine } from "@/lib/sales-by-line";
 import { daysText, jod, pct, signedPct } from "@/lib/format";
 
@@ -21,8 +22,14 @@ export default async function FinancePage() {
     );
   }
 
-  const [r, sales] = await Promise.all([companyReceivables(user.companyId), companySalesByLine(user.companyId, businessToday())]);
-  const salesSection = <SalesByLine sales={sales} />;
+  const today = businessToday();
+  const [r, sales, cash] = await Promise.all([companyReceivables(user.companyId), companySalesByLine(user.companyId, today), companyCash(user.companyId, today)]);
+  const salesSection = (
+    <>
+      <SalesByLine sales={sales} />
+      <CashCollected cash={cash} />
+    </>
+  );
   if (!r) {
     return (
       <div>
@@ -162,6 +169,52 @@ function SalesByLine({ sales }: { sales: Sales }) {
           ? "Where cost is known for less than 100% of sales, gross profit and margin use only the sales that have a cost. The rest is left out, not counted as zero cost."
           : "A dash means there is not enough data to work the figure out (for example no sales last year)."}
       </p>
+    </section>
+  );
+}
+
+type Cash = Awaited<ReturnType<typeof companyCash>>;
+
+function CashCollected({ cash }: { cash: Cash }) {
+  if (!cash) {
+    return (
+      <section aria-label="Cash collected" className="mt-6">
+        <h2 className="text-sm font-semibold">Cash collected, year to date</h2>
+        <p className="mt-1 text-xs text-muted">No customer receipts have been imported yet. Import the Customer receipts export (E04).</p>
+      </section>
+    );
+  }
+  const largest = Math.max(1, ...cash.months.map((m) => m.amount));
+  return (
+    <section aria-label="Cash collected" className="mt-6">
+      <h2 className="text-sm font-semibold">Cash collected, year to date</h2>
+      <p className="mt-1 text-xs text-muted">
+        {cash.from} to {cash.to}, against {cash.priorFrom} to {cash.priorTo}. Source: Customer receipts export. Each receipt row is counted once.
+      </p>
+      <div className="mt-2 grid grid-cols-2 gap-[10px] md:gap-[14px] min-[1000px]:grid-cols-4">
+        {[
+          { label: "Collected this year", value: jod(cash.ytd), note: `${signedPct(cash.growth)} vs last year (${jod(cash.priorYtd)})` },
+          { label: "Last 30 days", value: jod(cash.last30), note: "Up to today" },
+          { label: "Not linked to an invoice", value: jod(cash.unlinkedYtd), note: "Included in the total above" },
+        ].map((x) => (
+          <div key={x.label} className="rounded-[9px] border border-line bg-white p-[15px] md:p-[21px]">
+            <p className="text-[11px] text-muted md:text-xs">{x.label}</p>
+            <p className="my-2 text-2xl tracking-[-0.9px] md:text-[29px]">{x.value}</p>
+            <p className="text-[10px] text-muted md:text-[11px]">{x.note}</p>
+          </div>
+        ))}
+      </div>
+      <ul className="mt-3 space-y-2 rounded-[9px] border border-line bg-white p-[15px] md:p-[21px]">
+        {cash.months.map((m) => (
+          <li key={m.month} className="grid grid-cols-[70px_1fr_auto] items-center gap-3 text-xs">
+            <span>{m.month}</span>
+            <span className="h-3 rounded-full bg-[#eef2ef]">
+              <span className="block h-3 rounded-full bg-brand" style={{ width: `${(m.amount / largest) * 100}%` }} />
+            </span>
+            <span className="tabular-nums">{jod(m.amount)}</span>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
