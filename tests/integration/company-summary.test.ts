@@ -109,6 +109,19 @@ describe("companyDataSummary", () => {
     expect(await companyOpportunities(empty, TODAY)).toBeNull();
   });
 
+  it("summarises the last 7 days against the 7 before", async () => {
+    const { companyWeekly } = await import("@/lib/weekly");
+    const r = await companyWeekly(a, TODAY);
+    expect(r.windows).toMatchObject({ thisFrom: "2026-10-03", prevTo: "2026-10-02" });
+    expect(r.cash).toMatchObject({ now: 40, before: 0, pct: "Data missing" });
+    expect(r.sales.now).toBe(0);
+    expect(r.overdue).toMatchObject({ nowAsOf: "2026-10-08", beforeAsOf: "2026-10-01" });
+    expect(r.importsThisWeek.length).toBeGreaterThan(0);
+    const e = await companyWeekly(empty, TODAY);
+    expect(e.overdue).toBeNull();
+    expect(e.importsThisWeek).toEqual([]);
+  });
+
   it("reads an empty company as zeros with no snapshots", async () => {
     const { companyDataSummary } = await import("@/lib/company-data-summary");
     expect(await companyDataSummary(empty)).toMatchObject({ products: 0, invoices: 0, openInvoices: null, stock: null });

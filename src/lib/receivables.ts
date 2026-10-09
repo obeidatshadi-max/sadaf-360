@@ -4,10 +4,10 @@ import { getDb } from "@/db/client";
 import { buildReceivables, type OpenInvoiceRow, type ReceivablesReport } from "@/core/receivables";
 
 /** Receivables aging from the company's newest unpaid-invoice snapshot, or null when none has been imported. */
-export async function companyReceivables(companyId: string, topN = 10): Promise<(ReceivablesReport & { sourceRows: number }) | null> {
+export async function companyReceivables(companyId: string, topN = 10, snapshot?: string): Promise<(ReceivablesReport & { sourceRows: number }) | null> {
   const db = getDb();
   const latest = await db.execute(sql`select max(snapshot_date)::text as d from open_invoice_snapshots where company_id = ${companyId}`);
-  const asOf = (latest.rows[0] as { d: string | null } | undefined)?.d;
+  const asOf = snapshot ?? (latest.rows[0] as { d: string | null } | undefined)?.d;
   if (!asOf) return null;
   const r = await db.execute(sql`
     select i.invoice_no, c.code as customer_code, c.name as customer_name, s.remaining_amount::text as remaining, i.due_date::text as due_date
@@ -24,4 +24,10 @@ export async function companyReceivables(companyId: string, topN = 10): Promise<
     dueDate: x.due_date,
   }));
   return { ...buildReceivables(rows, asOf, topN), sourceRows: rows.length };
+}
+
+/** The two newest unpaid-invoice snapshot dates, newest first. */
+export async function lastTwoReceivableSnapshots(companyId: string): Promise<string[]> {
+  const r = await getDb().execute(sql`select distinct snapshot_date::text as d from open_invoice_snapshots where company_id = ${companyId} order by 1 desc limit 2`);
+  return (r.rows as { d: string }[]).map((x) => x.d);
 }
