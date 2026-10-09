@@ -4,7 +4,7 @@ import { getDb } from "@/db/client";
 import { buildReceivables, type OpenInvoiceRow, type ReceivablesReport } from "@/core/receivables";
 
 /** Receivables aging from the company's newest unpaid-invoice snapshot, or null when none has been imported. */
-export async function companyReceivables(companyId: string): Promise<(ReceivablesReport & { sourceRows: number }) | null> {
+export async function companyReceivables(companyId: string, topN = 10): Promise<(ReceivablesReport & { sourceRows: number }) | null> {
   const db = getDb();
   const latest = await db.execute(sql`select max(snapshot_date)::text as d from open_invoice_snapshots where company_id = ${companyId}`);
   const asOf = (latest.rows[0] as { d: string | null } | undefined)?.d;
@@ -23,5 +23,5 @@ export async function companyReceivables(companyId: string): Promise<(Receivable
     remaining: Number(x.remaining),
     dueDate: x.due_date,
   }));
-  return { ...buildReceivables(rows, asOf), sourceRows: rows.length };
+  return { ...buildReceivables(rows, asOf, topN), sourceRows: rows.length };
 }
