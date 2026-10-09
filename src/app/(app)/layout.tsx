@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { requireUser } from "@/lib/auth/current-user";
 import { logoutAction } from "@/server/actions/auth";
+import { DashboardUpdateStatus } from "@/components/dashboard-update-status";
+import { DEMO_AS_OF } from "@/demo/dataset";
 
 export default function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -39,6 +41,7 @@ async function Shell({ children }: { children: React.ReactNode }) {
           </form>
         )}
       </header>
+      <DashboardUpdateStatus sampleAsOf={user.guest ? DEMO_AS_OF : undefined} />
       <nav aria-label="Main" className="flex gap-1 border-b border-line bg-surface px-4 text-sm">
         {[
           ["/dashboard", "Overview"],

@@ -14,6 +14,9 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Netlify CLI build output (gitignored)
     ".netlify/**",
+    // Historical snapshots and browser review evidence are not app source.
+    "archive/**",
+    "docs/reviews/**",
   ]),
 ]);
 

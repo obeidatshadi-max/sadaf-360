@@ -154,7 +154,11 @@ export function viewRows(view: View): AccountRow[] {
 }
 
 export function viewSummary(view: View) {
-  const rows = viewRows(view);
+  return summarizeAccountRows(viewRows(view));
+}
+
+/** Recalculate totals and ratios for the actual rows displayed after filtering. */
+export function summarizeAccountRows(rows: AccountRow[]) {
   const s = summarize(rows.map(figures), PERIOD_DAYS);
   const total = allAccountRows().reduce((a, r) => a + r.grossProfit, 0);
   const sorted = [...rows].sort((a, b) => b.sales - a.sales);

@@ -46,10 +46,23 @@ describe("demo Sales & accounts (Advanced)", () => {
     expect(t).not.toContain("Demo University Hospital C");
   });
   it("search narrows the account table without breaking the totals", () => {
-    w.eval("state.query='wound'");
-    const t = text("advanced", "sales", "all").length;
+    text("advanced", "sales", "all");
+    w.eval("state.query='Demo Surgical Center B';render()");
+    const table = [...w.document.querySelectorAll("#main table")].find((t) => t.textContent?.includes("Credit used"))!;
+    const rows = table.querySelectorAll("tbody tr");
+    expect(rows).toHaveLength(2);
+    expect(rows[0].textContent).toContain("Demo Surgical Center B");
+    expect(rows[1].textContent).toContain("JOD 620.0K");
+    expect(rows[1].textContent).toContain("JOD 40.0K");
+    expect(rows[1].textContent).not.toContain("JOD 4.53M");
+    const main = w.document.querySelector("#main")!.textContent!;
+    expect(main).toContain("Filtered accounts");
+    expect(main).toContain("1 account");
+    w.eval("state.query='no such customer';render()");
+    const empty = [...w.document.querySelectorAll("#main table")].find((t) => t.textContent?.includes("Credit used"))!;
+    expect(empty.textContent).toContain("0 accounts");
+    expect(empty.textContent).not.toContain("JOD 4.53M");
     w.eval("state.query=''");
-    expect(t).toBeGreaterThan(0);
   });
   it("export carries one row per account in the selected view", () => {
     const rows = w.eval("window.SadafAccounts.viewRows('tender').length") as number;

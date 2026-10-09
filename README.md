@@ -1,5 +1,7 @@
 # Sadaf 360
 
+**Single working project:** see [START_HERE.md](START_HERE.md) for the current demo, Excel workbook, and archived CEO-folder versions. All future Sadaf development belongs in this repository.
+
 Business control tower for a medical equipment / devices / consumables distributor (first customer: Sadaf Medical, Jordan).
 
 - `src/` – Next.js app (multi-tenant: every business table carries `company_id`). Login, session, audit log, login throttle.

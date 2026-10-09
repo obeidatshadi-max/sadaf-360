@@ -36,7 +36,11 @@ export function embed(html, code) {
 if (process.argv[1]?.endsWith("build-demo.mjs")) {
   const path = root + "demo/index.html";
   const html = readFileSync(path, "utf8");
-  const next = embed(html, await bundle());
+  const status = JSON.parse(readFileSync(root + "src/lib/dashboard-status.json", "utf8"));
+  const next = embed(html, await bundle()).replace(
+    /\/\* BEGIN dashboard-status \*\/[\s\S]*?\/\* END dashboard-status \*\//,
+    () => `/* BEGIN dashboard-status */\nconst dashboardStatus=${JSON.stringify(status)};\n/* END dashboard-status */`,
+  );
   if (next !== html) writeFileSync(path, next);
   console.log(next === html ? "demo bundle already up to date" : "demo bundle updated");
 }
