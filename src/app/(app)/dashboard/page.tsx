@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
+import { requireUser } from "@/lib/auth/current-user";
+import { GuestOverview } from "@/demo/guest-overview";
 
 export const metadata: Metadata = { title: "Overview" };
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const user = await requireUser();
+  // Guests (open access) see the synthetic demonstration dataset; signed-in users see their own company's data.
+  if (user.guest) return <GuestOverview />;
   return (
     <section className="rounded-lg border border-line bg-surface p-6">
       <h1 className="text-xl font-semibold">Overview</h1>
