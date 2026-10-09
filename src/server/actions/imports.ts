@@ -8,6 +8,7 @@ import { SPECS, type ImportKind } from "@/core/import/specs";
 import { isIsoDate } from "@/core/calc";
 import { writeAudit } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { businessToday } from "@/lib/business-date";
 
 /** Largest file accepted. Netlify functions cap a request body near 6 MB, so stay under it and ask for monthly splits. */
 const MAX_FILE_BYTES = 4_500_000;
@@ -25,14 +26,6 @@ const formSchema = z.object({
   mode: z.enum(["check", "import"]),
   snapshotDate: z.string().trim(),
 });
-
-/**
- * The accountant's day. Invoices dated "tomorrow" in Amman / Baghdad (UTC+3) must not be called future dates just
- * because the server clock is still on the previous UTC day.
- */
-function businessToday(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Amman", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-}
 
 export async function importAction(_prev: ImportActionState, formData: FormData): Promise<ImportActionState> {
   const user = await getCurrentUser();
