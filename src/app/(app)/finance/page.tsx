@@ -1,0 +1,115 @@
+import type { Metadata } from "next";
+import { PageHeading } from "@/components/page-heading";
+import { AGING_BUCKETS } from "@/core/receivables";
+import { requireUser } from "@/lib/auth/current-user";
+import { companyReceivables } from "@/lib/receivables";
+import { daysText, jod } from "@/lib/format";
+
+export const metadata: Metadata = { title: "Finance & receivables" };
+
+export default async function FinancePage() {
+  const user = await requireUser();
+  if (user.guest) {
+    return (
+      <PageHeading
+        eyebrow="Finance & profitability"
+        title="Receivables aging"
+        sub="Sign in as a company user to see receivables from imported data. The guest view shows demonstration figures on the Overview only."
+      />
+    );
+  }
+
+  const r = await companyReceivables(user.companyId);
+  if (!r) {
+    return (
+      <div>
+        <PageHeading
+          eyebrow={`${user.companyName} · Finance & profitability`}
+          title="Receivables aging"
+          sub="No unpaid-invoice file has been imported yet. Import the Unpaid invoices export (E05) to see what customers owe and how late it is."
+        />
+        {user.role === "owner" ? (
+          <a href="/imports" className="rounded-[7px] bg-brand px-4 py-2 text-sm font-semibold text-brand-ink hover:bg-[#125747]">
+            Import data
+          </a>
+        ) : null}
+      </div>
+    );
+  }
+
+  const largest = Math.max(1, ...AGING_BUCKETS.map((b) => r.buckets[b]), r.dueDateMissing.amount);
+  const bars: { label: string; amount: number; tone: string }[] = [
+    ...AGING_BUCKETS.map((b) => ({ label: b === "Not due" ? "Not yet due" : `${b} days late`, amount: r.buckets[b], tone: b === "Not due" ? "bg-brand" : "bg-gold-soft" })),
+    { label: "Due date missing", amount: r.dueDateMissing.amount, tone: "bg-line" },
+  ];
+
+  return (
+    <div>
+      <PageHeading
+        eyebrow={`${user.companyName} · Finance & profitability`}
+        title="Receivables aging"
+        sub={`Unpaid invoices as of ${r.asOf} (source: Unpaid invoices export, ${r.sourceRows} rows). Age is counted from each invoice's due date. Invoices with no due date are shown apart and are not guessed.`}
+      />
+      <div className="grid grid-cols-2 gap-[10px] md:gap-[14px] min-[1000px]:grid-cols-3">
+        {[
+          { label: "Total unpaid", value: jod(r.total), note: `As of ${r.asOf}` },
+          { label: "Overdue", value: jod(r.overdue), note: "Past the due date" },
+          { label: "Due date missing", value: jod(r.dueDateMissing.amount), note: `${r.dueDateMissing.invoices} invoice${r.dueDateMissing.invoices === 1 ? "" : "s"}, not aged` },
+        ].map((s) => (
+          <div key={s.label} className="rounded-[9px] border border-line bg-white p-[15px] md:p-[21px]">
+            <p className="text-[11px] text-muted md:text-xs">{s.label}</p>
+            <p className="my-2 text-2xl tracking-[-0.9px] md:text-[29px]">{s.value}</p>
+            <p className="text-[10px] text-muted md:text-[11px]">{s.note}</p>
+          </div>
+        ))}
+      </div>
+
+      <section aria-label="Aging buckets" className="mt-5 rounded-[9px] border border-line bg-white p-[15px] md:p-[21px]">
+        <h2 className="text-sm font-semibold">By age</h2>
+        <ul className="mt-3 space-y-2.5">
+          {bars.map((b) => (
+            <li key={b.label} className="grid grid-cols-[110px_1fr_auto] items-center gap-3 text-xs md:grid-cols-[140px_1fr_auto]">
+              <span>{b.label}</span>
+              <span className="h-3 rounded-full bg-[#eef2ef]">
+                <span className={`block h-3 rounded-full ${b.tone}`} style={{ width: `${(b.amount / largest) * 100}%` }} />
+              </span>
+              <span className="tabular-nums">{jod(b.amount)}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section aria-label="Customers with most overdue" className="mt-5">
+        <h2 className="text-sm font-semibold">Customers with the most overdue</h2>
+        {r.topOverdue.length === 0 ? (
+          <p className="mt-2 text-sm text-muted">Nothing is overdue.</p>
+        ) : (
+          <div className="mt-2 overflow-x-auto rounded-lg border border-line bg-white">
+            <table className="w-full text-left text-sm">
+              <thead className="text-xs text-muted">
+                <tr>
+                  <th className="px-3 py-2 font-medium">Customer</th>
+                  <th className="px-3 py-2 text-right font-medium">Overdue</th>
+                  <th className="px-3 py-2 text-right font-medium">Invoices</th>
+                  <th className="px-3 py-2 text-right font-medium">Oldest</th>
+                </tr>
+              </thead>
+              <tbody>
+                {r.topOverdue.map((c) => (
+                  <tr key={c.customerCode} className="border-t border-line">
+                    <td className="px-3 py-2">
+                      {c.customerName} <span className="text-xs text-muted">{c.customerCode}</span>
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">{jod(c.overdue)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{c.invoices}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{daysText(c.oldestDaysOverdue)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
