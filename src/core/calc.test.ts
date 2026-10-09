@@ -176,3 +176,12 @@ describe('input validation and edge cases', () => {
     expect(c.weightedTenderMargin([{ value: 100, plannedCost: 120 }])).toBeCloseTo(-0.2);
   });
 });
+
+describe('valueGap', () => {
+  it('gap and capture for a cohort', () => {
+    const g = c.valueGap(18100, 12980);
+    expect(g.gap).toBe(5120);
+    expect(g.capture).toBeCloseTo(0.7171, 4);
+    expect(c.valueGap(0, 50).capture).toBe('Data missing');
+  });
+});

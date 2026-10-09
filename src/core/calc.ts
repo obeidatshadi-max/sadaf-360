@@ -114,6 +114,14 @@ export function purchaseGap(i: MonthlyUnitInput) {
   };
 }
 
+/** Expected vs actual value for one unit or cohort: the gap to investigate and the share of expected demand captured. */
+export function valueGap(expectedValue: number, actualValue: number) {
+  return {
+    gap: roundJod(expectedValue - actualValue),
+    capture: expectedValue <= 0 ? ('Data missing' as const) : actualValue / expectedValue,
+  };
+}
+
 export function customerStockDays(
   customerQty: number,
   expectedMonthlyQty: number,
