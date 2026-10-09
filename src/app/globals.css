@@ -13,6 +13,14 @@
   --color-gold: #b18b42;
   --color-bad: #a44d42;
   --color-bad-soft: #f8eae5;
+  /* Sidebar, from the demo. */
+  --color-side: #233735;
+  --color-side-hover: #3b514b;
+  --color-side-ink: #bdcec6;
+  --color-side-muted: #9aafa7;
+  --color-side-line: #455952;
+  --color-gold-soft: #d3b77e;
+  --color-avatar: #c8ae79;
 }
 
 body {

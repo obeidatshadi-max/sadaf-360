@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useTransition } from "react";
 import { importAction, type ImportActionState } from "@/server/actions/imports";
 import { SPECS, type ImportKind } from "@/core/import/specs";
 
@@ -10,13 +10,23 @@ const ORDER: ImportKind[] = ["products", "customers", "sales", "receipts", "open
 const field = "mt-1 block w-full rounded-md border border-line bg-white px-3 py-2 text-sm";
 
 export function ImportForm() {
-  const [state, action, pending] = useActionState<ImportActionState, FormData>(importAction, {});
+  const [state, action, actionPending] = useActionState<ImportActionState, FormData>(importAction, {});
+  const [transitioning, startTransition] = useTransition();
+  const pending = actionPending || transitioning;
   const [kind, setKind] = useState<ImportKind>("products");
   const needsSnapshot = SPECS[kind].snapshot === true;
 
+  // Submitted by hand instead of through `<form action>`: React resets a form after its action finishes, which cleared
+  // the chosen file and file type, so "Check file" then "Import" meant choosing both again.
+  const submit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const data = new FormData(e.currentTarget, (e.nativeEvent as SubmitEvent).submitter);
+    startTransition(() => action(data));
+  };
+
   return (
     <div className="space-y-5">
-      <form action={action} className="space-y-4 rounded-lg border border-line bg-surface p-5">
+      <form onSubmit={submit} className="space-y-4 rounded-lg border border-line bg-surface p-5">
         <div>
           <label htmlFor="kind" className="text-sm font-medium">
             Type of file
@@ -80,7 +90,7 @@ function Result({ fileName, outcome }: { fileName: string; outcome: NonNullable<
     : outcome.status === "rejected"
       ? `Nothing was imported: all ${outcome.rowsTotal} rows were rejected.`
       : outcome.status === "partial"
-        ? `Imported ${outcome.rowsAccepted} of ${outcome.rowsTotal} rows. ${outcome.rowsRejected} rows were rejected: fix them in the file and import it again.`
+        ? `Imported ${outcome.rowsAccepted} of ${outcome.rowsTotal} rows. ${outcome.rowsRejected} ${outcome.rowsRejected === 1 ? "row was" : "rows were"} rejected: fix ${outcome.rowsRejected === 1 ? "it" : "them"} in the file and import it again.`
         : `Imported all ${outcome.rowsTotal} rows.`;
 
   return (
