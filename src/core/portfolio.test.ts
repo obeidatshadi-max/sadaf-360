@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildPortfolio, NOT_SET, type SalesRow } from "./portfolio";
+import { buildPortfolio, nextStep, NOT_SET, type SalesRow } from "./portfolio";
 
 const r = (area: string | null, segment: string | null, customer: string, period: "current" | "prior", sales: number): SalesRow => ({ area, segment, customer, period, sales });
 
@@ -59,5 +59,16 @@ describe("buildPortfolio", () => {
   });
   it("reads an empty ledger as empty, not an error", () => {
     expect(buildPortfolio([], [])).toMatchObject({ totalSales: 0, areas: [], lookHere: [], unclassifiedShare: 0 });
+  });
+});
+
+describe("nextStep", () => {
+  it("suggests looking for range only where growth is broad and the range is thin", () => {
+    expect(nextStep({ signal: "Growing", thinCoverage: true })).toMatch(/second supplier/);
+    expect(nextStep({ signal: "Growing", thinCoverage: false })).toMatch(/sufficient/);
+  });
+  it("never suggests new range for one-customer growth or decline", () => {
+    expect(nextStep({ signal: "Growth rests on one customer", thinCoverage: true })).toMatch(/repeat/);
+    expect(nextStep({ signal: "Declining", thinCoverage: true })).toMatch(/Find out why/);
   });
 });

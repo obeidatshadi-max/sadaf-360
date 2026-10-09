@@ -147,3 +147,26 @@ export function buildPortfolio(rows: SalesRow[], coverage: AreaCoverage[]): Port
     lookHere: areas.filter((a) => a.signal === "Growing" && a.thinCoverage).sort((a, b) => b.delta - a.delta),
   };
 }
+
+/**
+ * One plain suggestion per signal. These are prompts for the owner to check, never a decision: the app has no data
+ * on suppliers it does not already work with.
+ */
+export function nextStep(a: Pick<AreaFigures, "signal" | "thinCoverage">): string {
+  switch (a.signal) {
+    case "Growing":
+      return a.thinCoverage
+        ? "Ask current suppliers for more products in this area, and look for a second supplier. Confirm need, margin and fit first."
+        : "Keep stock and supply secure. The range looks sufficient.";
+    case "Growth rests on one customer":
+      return "Check whether this customer's demand will repeat before adding range.";
+    case "Declining":
+      return "Find out why: price, stock-outs or a lost customer.";
+    case "No last-year base":
+      return "Wait for a full comparison period before judging.";
+    case "Too small to judge":
+      return "No action yet.";
+    default:
+      return "Keep monitoring.";
+  }
+}

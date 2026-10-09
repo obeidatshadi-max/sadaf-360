@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PageHeading } from "@/components/page-heading";
-import { CONCENTRATION_LIMIT, GROWTH_THRESHOLD, MIN_SHARE, NOT_SET, THIN_PRODUCTS, type AreaFigures } from "@/core/portfolio";
+import { CONCENTRATION_LIMIT, GROWTH_THRESHOLD, MIN_SHARE, NOT_SET, THIN_PRODUCTS, nextStep, type AreaFigures } from "@/core/portfolio";
 import { requireUser } from "@/lib/auth/current-user";
 import { businessToday } from "@/lib/business-date";
 import { companyPortfolio } from "@/lib/portfolio";
@@ -75,6 +75,7 @@ export default async function PortfolioPage() {
                 <th className="px-3 py-2 font-medium">Signal</th>
                 <th className="px-3 py-2 text-right font-medium">Top customer</th>
                 <th className="px-3 py-2 text-right font-medium">Range</th>
+                <th className="px-3 py-2 font-medium">Suggested next step</th>
               </tr>
             </thead>
             <tbody>
@@ -97,6 +98,7 @@ export default async function PortfolioPage() {
                     {a.area === NOT_SET || a.activeProducts === null ? "—" : `${a.activeProducts} products, ${a.suppliers} supplier${a.suppliers === 1 ? "" : "s"}`}
                     {a.thinCoverage ? <span className="block text-xs text-muted">thin</span> : null}
                   </td>
+                  <td className="px-3 py-2 text-xs text-muted">{nextStep(a)}</td>
                 </tr>
               ))}
             </tbody>
