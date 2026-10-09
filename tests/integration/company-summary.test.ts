@@ -63,6 +63,16 @@ describe("companyDataSummary", () => {
     expect(await companyReceivables(empty)).toBeNull();
   });
 
+  it("sums year-to-date sales by line and leaves margin unknown when cost is missing", async () => {
+    const { companySalesByLine } = await import("@/lib/sales-by-line");
+    const r = await companySalesByLine(a, TODAY);
+    const by = (l: string) => r.lines.find((x) => x.line === l)!;
+    expect(by("Equipment")).toMatchObject({ sales: 20, priorSales: 0, margin: "Data missing", growth: "Data missing", linesWithoutCost: 1 });
+    expect(by("Consumables").sales).toBe(10);
+    expect(r.total).toMatchObject({ sales: 30, linesWithoutCost: 2, costCoverage: 0 });
+    expect(r).toMatchObject({ from: "2026-01-01", priorTo: "2025-10-09" });
+  });
+
   it("reads an empty company as zeros with no snapshots", async () => {
     const { companyDataSummary } = await import("@/lib/company-data-summary");
     expect(await companyDataSummary(empty)).toMatchObject({ products: 0, invoices: 0, openInvoices: null, stock: null });

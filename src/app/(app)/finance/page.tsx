@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { PageHeading } from "@/components/page-heading";
 import { AGING_BUCKETS } from "@/core/receivables";
 import { requireUser } from "@/lib/auth/current-user";
+import { businessToday } from "@/lib/business-date";
 import { companyReceivables } from "@/lib/receivables";
-import { daysText, jod } from "@/lib/format";
+import { companySalesByLine } from "@/lib/sales-by-line";
+import { daysText, jod, pct, signedPct } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Finance & receivables" };
 
@@ -13,21 +15,23 @@ export default async function FinancePage() {
     return (
       <PageHeading
         eyebrow="Finance & profitability"
-        title="Receivables aging"
+        title="Sales, margin and receivables"
         sub="Sign in as a company user to see receivables from imported data. The guest view shows demonstration figures on the Overview only."
       />
     );
   }
 
-  const r = await companyReceivables(user.companyId);
+  const [r, sales] = await Promise.all([companyReceivables(user.companyId), companySalesByLine(user.companyId, businessToday())]);
+  const salesSection = <SalesByLine sales={sales} />;
   if (!r) {
     return (
       <div>
         <PageHeading
           eyebrow={`${user.companyName} · Finance & profitability`}
-          title="Receivables aging"
+          title="Sales, margin and receivables"
           sub="No unpaid-invoice file has been imported yet. Import the Unpaid invoices export (E05) to see what customers owe and how late it is."
         />
+        {salesSection}
         {user.role === "owner" ? (
           <a href="/imports" className="rounded-[7px] bg-brand px-4 py-2 text-sm font-semibold text-brand-ink hover:bg-[#125747]">
             Import data
@@ -47,9 +51,11 @@ export default async function FinancePage() {
     <div>
       <PageHeading
         eyebrow={`${user.companyName} · Finance & profitability`}
-        title="Receivables aging"
+        title="Sales, margin and receivables"
         sub={`Unpaid invoices as of ${r.asOf} (source: Unpaid invoices export, ${r.sourceRows} rows). Age is counted from each invoice's due date. Invoices with no due date are shown apart and are not guessed.`}
       />
+      {salesSection}
+      <h2 className="mb-3 mt-8 text-sm font-semibold">Receivables</h2>
       <div className="grid grid-cols-2 gap-[10px] md:gap-[14px] min-[1000px]:grid-cols-3">
         {[
           { label: "Total unpaid", value: jod(r.total), note: `As of ${r.asOf}` },
@@ -111,5 +117,51 @@ export default async function FinancePage() {
         )}
       </section>
     </div>
+  );
+}
+
+type Sales = Awaited<ReturnType<typeof companySalesByLine>>;
+
+function SalesByLine({ sales }: { sales: Sales }) {
+  const rows = [...sales.lines, sales.total];
+  const anyGap = rows.some((x) => typeof x.costCoverage === "number" && x.costCoverage < 1);
+  return (
+    <section aria-label="Sales and margin by line" className="mb-2">
+      <h2 className="text-sm font-semibold">Sales and margin by line, year to date</h2>
+      <p className="mt-1 text-xs text-muted">
+        {sales.from} to {sales.to}, against {sales.priorFrom} to {sales.priorTo}. Net of tax, returns deducted. Source: Sales and returns export.
+      </p>
+      <div className="mt-2 overflow-x-auto rounded-lg border border-line bg-white">
+        <table className="w-full text-left text-sm">
+          <thead className="text-xs text-muted">
+            <tr>
+              <th className="px-3 py-2 font-medium">Line</th>
+              <th className="px-3 py-2 text-right font-medium">Sales</th>
+              <th className="px-3 py-2 text-right font-medium">vs last year</th>
+              <th className="px-3 py-2 text-right font-medium">Gross profit</th>
+              <th className="px-3 py-2 text-right font-medium">Margin</th>
+              <th className="px-3 py-2 text-right font-medium">Cost known</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((x) => (
+              <tr key={x.line} className={`border-t border-line ${x.line === "Total" ? "font-semibold" : ""}`}>
+                <td className="px-3 py-2">{x.line}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{jod(x.sales)}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{signedPct(x.growth)}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{typeof x.grossProfit === "number" ? jod(x.grossProfit) : "—"}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{pct(x.margin, 1)}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{pct(x.costCoverage)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-1.5 text-xs text-muted">
+        {anyGap
+          ? "Where cost is known for less than 100% of sales, gross profit and margin use only the sales that have a cost. The rest is left out, not counted as zero cost."
+          : "A dash means there is not enough data to work the figure out (for example no sales last year)."}
+      </p>
+    </section>
   );
 }
