@@ -27,7 +27,7 @@ Both screens show a live current-day clock in Jordan time, a fixed screen-update
 
 This consolidation gives you one maintained application, one current demo, and one current Excel input specification. The demonstration remains synthetic. The main app can ingest CSV exports of the Alpha ERP files (products, customers, sales and returns, receipts, unpaid invoices, stock by batch, stock transactions, installed equipment) through the owner-only Import data page; XLSX upload and operational manual forms still need implementation. Alpha's real column names are not yet known: header spellings are assumptions in `src/core/import/specs.ts`. Filling the workbook does not update the app automatically.
 
-The main app includes company accounts, signup/login/password-reset infrastructure, calculation modules, and sample account screens. Signed-in company operating data stays empty until the owner imports files; the dashboard does not yet read imported data.
+The main app includes company accounts, signup/login/password-reset infrastructure, calculation modules, and sample account screens. Signed-in company screens read the owner's imported Alpha ERP files: Overview (headline tiles), Finance (`/finance`: sales and margin by line, cash collected, receivables aging), Inventory (`/inventory`: slow stock and estimated expiry loss), Management actions (`/opportunities`: overdue reorders and collections) and Data & update routine (`/weekly`: last 7 days against the 7 before). Every figure names its period or as-of date; missing data shows a dash, never zero. Screens without data say which file to import. The remaining demo screens (Compare versions, Products & suppliers, Finance targets) are listed as "Soon". Guests (open access) still see the synthetic demonstration data on the Overview only.
 
 ## Running and checking
 
@@ -65,7 +65,7 @@ The default development address is `http://localhost:3000/dashboard`. Sample acc
 
 These are the existing production addresses. Consolidating local files does not publish a deployment. Use the local canonical files above for the changes made in this consolidation.
 
-Next development milestone: upload CSV/XLSX exports, map fields, preview and validate joins, save import batches, then reconcile the Basic dashboard with the accountant's source reports.
+Next milestones: (1) obtain one real Alpha export per file type and adjust the header aliases in `src/core/import/specs.ts` (day-first dates, stock-issue sign and Government/Public to Tender are assumptions); (2) reconcile the screens with the accountant's own reports; (3) Basic and Pro tiers, emailed weekly digest, turning off `OPEN_ACCESS` once the owner login is confirmed.
 
 ## Handover verification
 
