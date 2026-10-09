@@ -1,0 +1,9 @@
+# Netlify builds the Next.js app with its Next.js runtime (detected automatically).
+# Only the Next.js build output is published; /demo is a separate static site and is never served from here.
+# The database is Netlify Database: migrations in netlify/database/migrations are applied before a production deploy is published.
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"

@@ -1,0 +1,34 @@
+import { Suspense } from "react";
+import { requireUser } from "@/lib/auth/current-user";
+import { logoutAction } from "@/server/actions/auth";
+
+export default function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-muted">Loading…</div>}>
+      <Shell>{children}</Shell>
+    </Suspense>
+  );
+}
+
+async function Shell({ children }: { children: React.ReactNode }) {
+  const user = await requireUser();
+  return (
+    <div className="min-h-dvh">
+      <header className="flex items-center justify-between gap-3 border-b border-line bg-surface px-5 py-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-brand">Sadaf 360</p>
+          <p className="text-sm font-medium">{user.companyName}</p>
+        </div>
+        <form action={logoutAction} className="flex items-center gap-3 text-sm">
+          <span className="text-muted">
+            {user.fullName} · {user.role}
+          </span>
+          <button type="submit" className="rounded-md border border-line px-3 py-1.5">
+            Sign out
+          </button>
+        </form>
+      </header>
+      <main className="mx-auto max-w-5xl px-5 py-8">{children}</main>
+    </div>
+  );
+}

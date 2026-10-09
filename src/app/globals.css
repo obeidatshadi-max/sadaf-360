@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+/* Tokens match the promotional demo (green + gold on a soft neutral). */
+@theme {
+  --color-canvas: #f3f5f2;
+  --color-surface: #ffffff;
+  --color-line: #dfe6e2;
+  --color-ink: #233534;
+  --color-muted: #71817e;
+  --color-brand: #176e60;
+  --color-brand-ink: #ffffff;
+  --color-brand-soft: #e8f2ed;
+  --color-gold: #b18b42;
+  --color-bad: #a44d42;
+  --color-bad-soft: #f8eae5;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-gold);
+  outline-offset: 2px;
+}
