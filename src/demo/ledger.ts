@@ -9,6 +9,7 @@ import { buildReceivables, type OpenInvoiceRow } from "@/core/receivables";
 import { buildOpportunities, type OrderRow } from "@/core/opportunities";
 import { change, weekWindows } from "@/core/weekly";
 import { roundJod } from "@/core/calc";
+import { buildPortfolio, type SalesRow } from "@/core/portfolio";
 
 type Line = LineName | "All lines";
 
@@ -124,4 +125,51 @@ export function demoLedger(line: Line = "All lines") {
         .sort((a, b) => b.sales - a.sales),
     },
   };
+}
+
+// ─── Portfolio growth (synthetic) ────────────────────────────────────────────
+
+type Seg = "Tender" | "Private";
+const PORTFOLIO_CUSTOMERS: Record<string, Seg> = {
+  "Demo Public Hospital Group": "Tender",
+  "Demo University Hospital C": "Tender",
+  "Demo Hospital E": "Tender",
+  "Demo Military Medical Center F": "Tender",
+  "Demo Private Hospital A": "Private",
+  "Demo Surgical Center B": "Private",
+  "Demo Wound Clinic D": "Private",
+  "Demo Private Hospital G": "Private",
+};
+
+/** Synthetic area table. `cur` rows add up to the demo's year-to-date sales (JOD 4.53M). Weights are per customer. */
+const AREAS: { area: string | null; cur: number; prior: number; wCur: number[]; wPrior: number[]; products: number; suppliers: number }[] = [
+  { area: "Respiratory", cur: 820000, prior: 610000, wCur: [10, 12, 8, 6, 30, 14, 6, 14], wPrior: [14, 16, 10, 8, 22, 10, 8, 12], products: 2, suppliers: 1 },
+  { area: "Surgery and electrosurgery", cur: 720000, prior: 380000, wCur: [75, 4, 6, 3, 4, 5, 1, 2], wPrior: [45, 8, 12, 6, 8, 12, 2, 7], products: 3, suppliers: 2 },
+  { area: "Infusion and critical care", cur: 650000, prior: 520000, wCur: [14, 16, 10, 8, 18, 20, 6, 8], wPrior: [16, 18, 12, 10, 16, 16, 6, 6], products: 4, suppliers: 1 },
+  { area: "Critical care monitoring", cur: 640000, prior: 560000, wCur: [20, 18, 14, 10, 16, 10, 4, 8], wPrior: [20, 18, 14, 10, 16, 10, 4, 8], products: 6, suppliers: 3 },
+  { area: "Wound care", cur: 560000, prior: 600000, wCur: [6, 8, 6, 4, 22, 18, 30, 6], wPrior: [6, 8, 6, 4, 22, 18, 30, 6], products: 7, suppliers: 3 },
+  { area: "Infection control", cur: 480000, prior: 520000, wCur: [18, 20, 16, 14, 12, 8, 4, 8], wPrior: [18, 20, 16, 14, 12, 8, 4, 8], products: 5, suppliers: 2 },
+  { area: "Neurology and psychiatry", cur: 400000, prior: 480000, wCur: [12, 30, 8, 4, 24, 8, 4, 10], wPrior: [12, 30, 8, 4, 24, 8, 4, 10], products: 4, suppliers: 2 },
+  { area: null, cur: 260000, prior: 240000, wCur: [15, 15, 15, 10, 15, 10, 10, 10], wPrior: [15, 15, 15, 10, 15, 10, 10, 10], products: 0, suppliers: 0 },
+];
+
+function spread(total: number, weights: number[]): number[] {
+  const w = weights.reduce((a, b) => a + b, 0);
+  const parts = weights.map((x) => Math.round((total * x) / w));
+  parts[0] = parts[0]! + (total - parts.reduce((a, b) => a + b, 0));
+  return parts;
+}
+
+export function demoPortfolio() {
+  const names = Object.keys(PORTFOLIO_CUSTOMERS);
+  const rows: SalesRow[] = AREAS.flatMap((a) => {
+    const cur = spread(a.cur, a.wCur);
+    const prior = spread(a.prior, a.wPrior);
+    return names.flatMap((customer, i) => [
+      { area: a.area, segment: PORTFOLIO_CUSTOMERS[customer]!, customer, period: "current" as const, sales: cur[i]! },
+      { area: a.area, segment: PORTFOLIO_CUSTOMERS[customer]!, customer, period: "prior" as const, sales: prior[i]! },
+    ]);
+  });
+  const coverage = AREAS.filter((a) => a.area !== null).map((a) => ({ area: a.area as string, activeProducts: a.products, suppliers: a.suppliers }));
+  return { ...buildPortfolio(rows, coverage), from: "2026-01-01", to: DEMO_AS_OF, priorFrom: "2025-01-01", priorTo: "2025-10-08" };
 }

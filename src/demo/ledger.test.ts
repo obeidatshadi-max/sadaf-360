@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { lines, invoices } from "./dataset";
-import { demoLedger } from "./ledger";
+import { demoLedger, demoPortfolio } from "./ledger";
 
 describe("demo ledger agrees with the demo's headline figures", () => {
   const all = demoLedger();
@@ -34,5 +34,23 @@ describe("demo ledger agrees with the demo's headline figures", () => {
     expect(w.cash.now).toBe(67500);
     expect(w.cash.before).toBe(58000);
     expect(w.overdue.before).toBeGreaterThan(0);
+  });
+});
+
+describe("demo portfolio agrees with the demo's headline figures", () => {
+  const p = demoPortfolio();
+  const area = (n: string) => p.areas.find((a) => a.area === n)!;
+  it("adds up to the demo's year-to-date sales", () => {
+    expect(p.totalSales).toBe(lines.reduce((s, l) => s + l.rev, 0));
+  });
+  it("tells broad growth, one-customer growth, decline and stable apart", () => {
+    expect(area("Respiratory").signal).toBe("Growing");
+    expect(area("Infusion and critical care").signal).toBe("Growing");
+    expect(area("Surgery and electrosurgery").signal).toBe("Growth rests on one customer");
+    expect(area("Neurology and psychiatry").signal).toBe("Declining");
+    expect(area("Wound care").signal).toBe("Stable");
+  });
+  it("points at growing areas with a thin range", () => {
+    expect(p.lookHere.map((a) => a.area)).toEqual(["Respiratory", "Infusion and critical care"]);
   });
 });
