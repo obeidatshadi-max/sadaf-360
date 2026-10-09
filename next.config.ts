@@ -10,6 +10,8 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
+  // ERP file uploads go through a Server Action; the default 1 MB limit is too small for a month of sales lines.
+  experimental: { serverActions: { bodySizeLimit: "5mb" } },
   async redirects() {
     return [{ source: "/accounts", destination: "/accounts/all", permanent: false }];
   },
