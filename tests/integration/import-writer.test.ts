@@ -115,6 +115,18 @@ describe("sales, returns and receipts", () => {
     expect(inv!.due_date).toBe("2026-12-09");
   });
 
+  it("stores a therapeutic area, keeps it when a later file has no such column, and replaces it when a file gives a new one", async () => {
+    const d = (await q<{ id: string }>(`insert into companies (slug, name) values ('d', 'D') returning id`))[0]!.id;
+    const area = async () => (await q<{ therapeutic_area: string | null }>(`select therapeutic_area from products where company_id = $1 and code = 'P1'`, [d]))[0]!.therapeutic_area;
+    const csv = (...lines: string[]) => lines.join("\n");
+    await imp(d, "products", csv("code,name,category,therapeutic area", "P1,Circuit,Consumables,Respiratory"));
+    expect(await area()).toBe("Respiratory");
+    await imp(d, "products", csv("code,name,category", "P1,Circuit (renamed),Consumables"));
+    expect(await area()).toBe("Respiratory");
+    await imp(d, "products", csv("code,name,category,therapeutic area", "P1,Circuit (renamed),Consumables,Critical care"));
+    expect(await area()).toBe("Critical care");
+  });
+
   it("does not let company B see or reuse company A's customers", async () => {
     const r = await imp(b, "sales", "invoice no,line no,date,customer code,product code,qty,net sales\nI1,1,2026-09-01,C1,P1,1,10");
     expect(r).toMatchObject({ status: "rejected", rowsAccepted: 0 });
