@@ -88,8 +88,8 @@ describe("dataset stays in step with the frozen promotional demo", () => {
 
   it("lines", () => expect(pick(arr("lines"), ["name", "rev", "gp", "cost", "col", "rec"])).toEqual(lines));
   it("units", () =>
-    expect(pick(arr("units"), ["id", "line", "expected", "actual", "service"])).toEqual(
-      units.map(({ id, line, expected, actual, service }) => ({ id, line, expected, actual, service })),
+    expect(pick(arr("units"), ["id", "line", "account", "expected", "actual", "service"])).toEqual(
+      units.map(({ id, line, account, expected, actual, service }) => ({ id, line, account, expected, actual, service })),
     ));
   it("stock", () =>
     expect(pick(arr("stock"), ["id", "qty", "value", "months", "expiry", "risk"])).toEqual(
@@ -97,7 +97,7 @@ describe("dataset stays in step with the frozen promotional demo", () => {
     ));
   it("invoices", () => expect(pick(arr("invoices"), ["account", "value", "due"])).toEqual(invoices.map(({ account, value, due }) => ({ account, value, due }))));
   it("tenders", () =>
-    expect(pick(arr("tenders"), ["id", "line", "value", "stage", "margin"])).toEqual(
-      tenders.map(({ id, line, value, stage, margin }) => ({ id, line, value, stage, margin })),
+    expect(pick(arr("tenders"), ["id", "line", "account", "value", "stage", "margin", "due"])).toEqual(
+      tenders.map(({ id, line, account, value, stage, margin, due }) => ({ id, line, account, value, stage, margin, due })),
     ));
 });

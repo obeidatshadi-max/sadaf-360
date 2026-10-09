@@ -226,7 +226,7 @@ export const tenders: DemoTender[] = [
     id: "TN-052",
     name: "BOWA ARC 400 surgical systems",
     line: "Devices",
-    account: "Demo Surgical Center B",
+    account: "Demo Military Medical Center F",
     value: 165000,
     stage: "Submitted",
     margin: 27,
@@ -355,7 +355,7 @@ export const invoices: DemoInvoice[] = [
     account: "Demo Private Hospital A",
     line: "Consumables",
     value: 14500,
-    due: "2026-09-01",
+    due: "2026-08-31",
     owner: "Sales manager"
   }
 ];

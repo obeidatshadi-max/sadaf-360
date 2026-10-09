@@ -13,3 +13,10 @@ export function jodShort(n: number): string {
 
 /** Ratio as a percentage; unavailable values (for example "Data missing") show as an em dash. */
 export const pct = (v: number | string, digits = 0): string => (typeof v === "number" ? `${(v * 100).toFixed(digits)}%` : "—");
+
+/** Signed percentage for growth: +10.0%, -6.3%. Unavailable values show as an em dash. */
+export const signedPct = (v: number | string, digits = 1): string =>
+  typeof v === "number" ? `${v >= 0 ? "+" : "-"}${Math.abs(v * 100).toFixed(digits)}%` : "—";
+
+/** Whole days, for ageing columns. */
+export const daysText = (n: number | string): string => (typeof n === "number" ? `${Math.round(n)} d` : "—");

@@ -28,6 +28,13 @@ Schema changes: `npm run db:generate` then `npm run db:netlify-migrations` (mirr
 - Email goes through Brevo: set `BREVO_API_KEY` and `MAIL_SENDER` (a verified sender). Without them the forgot-password page says it is not set up. Links use `APP_URL` (or Netlify's `URL`), never request headers.
 - Tests run the real migrations on an in-process Postgres (PGlite): `tests/integration/accounts.test.ts`.
 
+## Tender versus private accounts
+
+- `/accounts/all`, `/accounts/tender`, `/accounts/private` (and `/sample/accounts/...` for signed-in users): every account with YTD sales, gross profit, margin, growth, target, receivables, credit use and a health status with reasons; tender board and win rate on the tender view.
+- Calculations live in `src/core/accounts.ts` (rules and ratios) and `src/demo/accounts.ts` (synthetic data through the core). Eight synthetic accounts add up exactly to the company's business-line totals; `src/demo/accounts.test.ts` enforces it.
+- The frozen promo demo embeds the same compiled code (`npm run demo:build` after changing `src/core` or `src/demo`); a test fails if the embedded bundle is stale.
+- Inputs: `docs/Sadaf_inputs_workbook.xlsx` v6, new sheet `Accounts` (AM6 account master, AM7 targets and last year, AW3 tender detail, AM8 tender results). `scripts/workbook/` rebuilds it and re-checks every formula with an independent engine (`python build_xlsx.py`, `python dump_xlsx.py`, `node eval_xlsx.mjs`; needs `openpyxl` and `hyperformula`).
+
 ## Rules
 
 - Never show a figure without its as-of date and source file.
