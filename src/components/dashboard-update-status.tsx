@@ -15,7 +15,7 @@ const dateTime = new Intl.DateTimeFormat("en-GB", {
   hour12: false,
 });
 
-export function DashboardUpdateStatus({ sampleAsOf }: { sampleAsOf?: string }) {
+export function DashboardUpdateStatus({ sampleAsOf, integration }: { sampleAsOf?: string; integration?: string }) {
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
     const tick = () => setNow(new Date());
@@ -41,7 +41,7 @@ export function DashboardUpdateStatus({ sampleAsOf }: { sampleAsOf?: string }) {
       </div>
       <div>
         <span className="font-semibold">Data last integrated: </span>
-        <span>Not connected — no imports completed</span>
+        <span>{integration ?? "Not connected — no imports completed"}</span>
         {sampleAsOf ? <span> · Sample data as of {sampleAsOf}</span> : null}
       </div>
     </section>
