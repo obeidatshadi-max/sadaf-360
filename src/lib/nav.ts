@@ -16,7 +16,7 @@ export function navItems({ guest, owner }: { guest: boolean; owner: boolean }): 
   const main: NavItem[] = [
     { label: "Owner overview", icon: "◫", href: "/dashboard", match: ["/dashboard"] },
     { label: "Compare versions", icon: "◧" },
-    { label: "Data & update routine", icon: "⇅" },
+    { label: "Data & update routine", icon: "⇅", href: "/weekly", match: ["/weekly"] },
     { label: "Products & suppliers", icon: "▦" },
     { label: "Sales & accounts", icon: "↗", href: "/accounts/all", match: ["/accounts"] },
     { label: "Inventory & supply", icon: "▦", href: "/inventory", match: ["/inventory"] },
