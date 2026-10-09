@@ -58,6 +58,9 @@ export function reconcile(kind: ImportKind, rows: RowRef[], snapshotDate: string
       lines.push({ label: "Net sales after returns", value: jod(sum(rows, "netSales")) });
       lines.push({ label: "Product cost", value: jod(sum(rows.filter((r) => r.values.productCost != null), "productCost")) });
       lines.push({ label: "Lines without cost", value: count(noCost.length) });
+      const dueByInvoice = new Map<string, boolean>();
+      for (const r of rows) dueByInvoice.set(String(r.values.invoiceNo), (dueByInvoice.get(String(r.values.invoiceNo)) ?? false) || r.values.dueDate != null);
+      lines.push({ label: "Invoices without a due date", value: count([...dueByInvoice.values()].filter((has) => !has).length) });
       break;
     }
     case "receipts": {

@@ -17,7 +17,7 @@ Consolidated 9 October 2026 from the main app project and the separate Desktop C
 
 ## What was reconciled
 
-The main repository already contained Claude's account-segmentation work at commit `d2c8311`. CEO `MedTech_Portfolio_360_v6.html` matched `demo/index.html` after excluding the generated account bundle. CEO workbook `(6)` and `docs/Sadaf_inputs_workbook.xlsx` were byte-identical (SHA-256 `72698b02c4273e0815b17502cb024c1c9f327b993a1951df6f452113ea841aee`). No newer content was discarded.
+The main repository already contained Claude's account-segmentation work at commit `d2c8311`. CEO `MedTech_Portfolio_360_v6.html` matched `demo/index.html` after excluding the generated account bundle. CEO workbook `(6)` and `docs/Sadaf_inputs_workbook.xlsx` were byte-identical (SHA-256 `72698b02c4273e0815b17502cb024c1c9f327b993a1951df6f452113ea841aee`). No newer content was discarded. On 9 October 2026 `docs/Sadaf_inputs_workbook.xlsx` was updated (new sheet "Imports and predictions", E03/E04 field notes, "Start here" lines 20-21), so it is no longer byte-identical to the archived CEO copy; `docs/` holds the current version.
 
 The canonical demo now recalculates account cards and table totals for searched customers using the shared summary calculation. Its generated bundle has been rebuilt. The corresponding regression check covers one matching account and no matches. Segment-wide context remains labeled separately. Original CEO files are preserved unchanged in the archive.
 

@@ -151,6 +151,18 @@ describe("validateImport: sales", () => {
     ]);
   });
 
+  it("reads an optional due date, keeps a missing one unknown, and rejects one before the invoice date", () => {
+    const r = run(
+      "sales",
+      `${header},due date
+I1,1,2026-09-01,C1,P1,5,100,60,2026-10-01
+I2,1,2026-09-01,C1,P1,5,100,60,
+I3,1,2026-09-01,C1,P1,5,100,60,2026-08-01`,
+    );
+    expect(r.accepted.map((a) => a.values.dueDate)).toEqual(["2026-10-01", null]);
+    expect(r.rejected).toEqual([{ row: 4, reason: "due date is before the invoice date" }]);
+  });
+
   it("treats a missing cost as unknown, not zero", () => {
     const r = run("sales", "invoice no,line no,date,customer code,product code,qty,net sales\nI1,1,2026-09-01,C1,P1,5,100");
     expect(r.accepted[0].values.productCost).toBeNull();

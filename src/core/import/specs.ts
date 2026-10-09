@@ -166,6 +166,9 @@ export const SPECS: Record<ImportKind, FileSpec> = {
       f("invoiceNo", ["invoice no", "invoice number", "invoice id", "invoice", "inv no", "document no", "doc no", "رقم الفاتورة"], true, code(80)),
       f("lineNo", ["line no", "line id", "line number", "line", "row id"], true, code(40)),
       f("invoiceDate", ["invoice date", "date", "doc date", "document date", "تاريخ الفاتورة"], true, date),
+      // Optional, but it is what lets a customer's payment lateness be measured for invoices that are paid before
+      // the first unpaid-invoice snapshot (E05 carries the due date only while an invoice is unpaid).
+      f("dueDate", ["due date", "contractual due date", "due", "maturity date", "تاريخ الاستحقاق"], false, date),
       f("docType", ["doc type", "document type", "type", "transaction type"], false, docType),
       customerCode,
       productCode(true),
@@ -180,6 +183,7 @@ export const SPECS: Record<ImportKind, FileSpec> = {
       if (v.docType == null) v.docType = Number(v.quantity) < 0 ? "return" : "invoice";
     },
     check: (v) => {
+      if (v.dueDate != null && String(v.dueDate) < String(v.invoiceDate)) return "due date is before the invoice date";
       if (v.docType === "return" && Number(v.quantity) > 0) return "a return must have a negative quantity";
       if (v.docType === "return" && Number(v.netSales) > 0) return "a return must have negative net sales";
       return null;
