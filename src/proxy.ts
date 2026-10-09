@@ -2,6 +2,9 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const SESSION_COOKIE = "sadaf_session";
 
+/** Pages that must be reachable without a session. */
+const PUBLIC_PATHS = new Set(["/login", "/signup", "/forgot-password", "/reset-password"]);
+
 /** Same switch as src/lib/auth/open-access.ts (the proxy cannot import server-only code). */
 const openAccess = () => process.env.OPEN_ACCESS === "true";
 
@@ -11,7 +14,7 @@ const openAccess = () => process.env.OPEN_ACCESS === "true";
  */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  if (pathname === "/login") return NextResponse.next();
+  if (PUBLIC_PATHS.has(pathname)) return NextResponse.next();
   if (pathname === "/") {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";

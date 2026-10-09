@@ -15,6 +15,9 @@ export default async function DashboardPage() {
         No data has been imported yet. The first step is importing the Alpha ERP exports (sales, products, customers, receivables, stock);
         every figure on this page will then show its source file and as-of date.
       </p>
+      <a href="/sample" className="mt-4 inline-block rounded-md bg-brand px-4 py-2 text-sm font-semibold text-brand-ink">
+        Explore with sample data
+      </a>
     </section>
   );
 }
