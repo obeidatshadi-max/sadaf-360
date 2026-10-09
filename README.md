@@ -21,6 +21,13 @@ Before a PR: `npm run typecheck && npm run lint && npm test && npx next build`.
 
 Schema changes: `npm run db:generate` then `npm run db:netlify-migrations` (mirrors Drizzle SQL into `netlify/database/migrations`).
 
+## Accounts
+
+- `/signup` creates a company and its owner (free; limited to 5 per network address per hour, honeypot, password policy).
+- `/forgot-password` emails a one-time link (valid 60 minutes, only its hash is stored); `/reset-password` sets the new password and signs out every older session.
+- Email goes through Brevo: set `BREVO_API_KEY` and `MAIL_SENDER` (a verified sender). Without them the forgot-password page says it is not set up. Links use `APP_URL` (or Netlify's `URL`), never request headers.
+- Tests run the real migrations on an in-process Postgres (PGlite): `tests/integration/accounts.test.ts`.
+
 ## Rules
 
 - Never show a figure without its as-of date and source file.

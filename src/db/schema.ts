@@ -30,6 +30,8 @@ export const users = pgTable(
     role: userRole("role").notNull().default("viewer"),
     active: boolean("active").notNull().default(true),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+    /** Sessions issued before this moment are rejected (set on password reset). */
+    passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   // One account per email address, case-insensitively: login, create-user and bootstrap all look users up by lower(email).
@@ -49,4 +51,20 @@ export const auditLogs = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("audit_action_created_idx").on(t.action, t.createdAt)],
+);
+
+/** One-time password-reset links. Only the SHA-256 of the token is stored, so a database leak cannot be replayed. */
+export const passwordResets = pgTable(
+  "password_resets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: varchar("token_hash", { length: 64 }).notNull().unique(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("password_resets_user_idx").on(t.userId)],
 );
