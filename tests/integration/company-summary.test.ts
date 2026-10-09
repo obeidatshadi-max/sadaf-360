@@ -55,6 +55,14 @@ describe("companyDataSummary", () => {
     });
   });
 
+  it("ages the newest unpaid-invoice snapshot, leaving invoices without a due date unaged", async () => {
+    const { companyReceivables } = await import("@/lib/receivables");
+    const r = await companyReceivables(a);
+    expect(r).toMatchObject({ asOf: "2026-10-08", total: 25, overdue: 0, sourceRows: 1 });
+    expect(r!.dueDateMissing).toEqual({ invoices: 1, amount: 25 });
+    expect(await companyReceivables(empty)).toBeNull();
+  });
+
   it("reads an empty company as zeros with no snapshots", async () => {
     const { companyDataSummary } = await import("@/lib/company-data-summary");
     expect(await companyDataSummary(empty)).toMatchObject({ products: 0, invoices: 0, openInvoices: null, stock: null });

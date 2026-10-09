@@ -20,7 +20,7 @@ export function navItems({ guest, owner }: { guest: boolean; owner: boolean }): 
     { label: "Products & suppliers", icon: "▦" },
     { label: "Sales & accounts", icon: "↗", href: "/accounts/all", match: ["/accounts"] },
     { label: "Inventory & supply", icon: "▦" },
-    { label: "Finance & profitability", icon: "◉" },
+    { label: "Finance & profitability", icon: "◉", href: "/finance", match: ["/finance"] },
     { label: "Management actions", icon: "✓" },
     owner && !guest
       ? { label: "Alpha ERP data", icon: "⇄", href: "/imports", match: ["/imports"] }
