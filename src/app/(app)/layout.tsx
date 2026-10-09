@@ -47,6 +47,7 @@ async function Shell({ children }: { children: React.ReactNode }) {
           ["/dashboard", "Overview"],
           ["/accounts/all", "Accounts"],
           ...(user.guest ? [] : [["/sample", "Sample data"]]),
+          ...(!user.guest && user.role === "owner" ? [["/imports", "Import data"]] : []),
         ].map(([href, label]) => (
           <a key={href} href={href} className="rounded-t-md px-3 py-2.5 text-muted hover:text-ink">
             {label}

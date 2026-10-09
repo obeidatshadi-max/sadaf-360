@@ -1,0 +1,92 @@
+"use server";
+
+import { z } from "zod";
+import { getDb } from "@/db/client";
+import { runImport, type ImportOutcome } from "@/db/import-writer";
+import { SPECS, type ImportKind } from "@/core/import/specs";
+import { isIsoDate } from "@/core/calc";
+import { writeAudit } from "@/lib/audit";
+import { getCurrentUser } from "@/lib/auth/current-user";
+
+/** Largest file accepted. Netlify functions cap a request body near 6 MB, so stay under it and ask for monthly splits. */
+const MAX_FILE_BYTES = 4_500_000;
+/** Rows echoed back to the page; the full list of rejections is still counted and the first 50 are stored on the batch. */
+const SHOWN_ROWS = 200;
+
+export type ImportActionState = {
+  error?: string;
+  fileName?: string;
+  outcome?: ImportOutcome & { rejectionsHidden: number; warningsHidden: number };
+};
+
+const formSchema = z.object({
+  kind: z.enum(Object.keys(SPECS) as [ImportKind, ...ImportKind[]]),
+  mode: z.enum(["check", "import"]),
+  snapshotDate: z.string().trim(),
+});
+
+/**
+ * The accountant's day. Invoices dated "tomorrow" in Amman / Baghdad (UTC+3) must not be called future dates just
+ * because the server clock is still on the previous UTC day.
+ */
+function businessToday(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Amman", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+}
+
+export async function importAction(_prev: ImportActionState, formData: FormData): Promise<ImportActionState> {
+  const user = await getCurrentUser();
+  if (!user || user.guest || user.role !== "owner") return { error: "Only the company owner can import data." };
+
+  const parsed = formSchema.safeParse({
+    kind: formData.get("kind"),
+    mode: formData.get("mode"),
+    snapshotDate: String(formData.get("snapshotDate") ?? ""),
+  });
+  if (!parsed.success) return { error: "Choose the type of file." };
+  const { kind, mode, snapshotDate } = parsed.data;
+  if (snapshotDate !== "" && !isIsoDate(snapshotDate)) return { error: "The snapshot date is not a valid date." };
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return { error: "Choose a CSV file." };
+  if (file.size > MAX_FILE_BYTES) {
+    return { error: `The file is ${(file.size / 1e6).toFixed(1)} MB. The limit is ${(MAX_FILE_BYTES / 1e6).toFixed(1)} MB: export one month at a time.` };
+  }
+  const text = await file.text();
+  if (text.includes("�")) {
+    return { error: "The file is not UTF-8, so Arabic names would be garbled. In Excel use Save As, CSV UTF-8 (Comma delimited)." };
+  }
+
+  const dryRun = mode !== "import";
+  const outcome = await runImport(getDb(), {
+    companyId: user.companyId,
+    userId: user.id,
+    kind,
+    fileName: file.name,
+    text,
+    today: businessToday(),
+    snapshotDate: snapshotDate === "" ? undefined : snapshotDate,
+    dryRun,
+  });
+
+  if (outcome.wrote) {
+    await writeAudit({
+      companyId: user.companyId,
+      userId: user.id,
+      action: "import.run",
+      entityType: "import_batch",
+      entityId: outcome.batchId ?? undefined,
+      details: { kind, fileName: file.name, status: outcome.status, rowsAccepted: outcome.rowsAccepted, rowsRejected: outcome.rowsRejected },
+    });
+  }
+
+  return {
+    fileName: file.name,
+    outcome: {
+      ...outcome,
+      rejections: outcome.rejections.slice(0, SHOWN_ROWS),
+      warnings: outcome.warnings.slice(0, SHOWN_ROWS),
+      rejectionsHidden: Math.max(0, outcome.rejections.length - SHOWN_ROWS),
+      warningsHidden: Math.max(0, outcome.warnings.length - SHOWN_ROWS),
+    },
+  };
+}
