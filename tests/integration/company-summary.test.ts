@@ -102,6 +102,13 @@ describe("companyDataSummary", () => {
     expect(await companyStockRisk(empty)).toBeNull();
   });
 
+  it("finds opportunities without guessing from too little history", async () => {
+    const { companyOpportunities } = await import("@/lib/opportunities");
+    const r = await companyOpportunities(a, TODAY);
+    expect(r).toMatchObject({ customersWithEnoughHistory: 0, customersWithoutEnoughHistory: 1, ranked: [], receivablesAsOf: "2026-10-08" });
+    expect(await companyOpportunities(empty, TODAY)).toBeNull();
+  });
+
   it("reads an empty company as zeros with no snapshots", async () => {
     const { companyDataSummary } = await import("@/lib/company-data-summary");
     expect(await companyDataSummary(empty)).toMatchObject({ products: 0, invoices: 0, openInvoices: null, stock: null });
