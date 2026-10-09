@@ -28,7 +28,7 @@ export function DashboardUpdateStatus({ sampleAsOf, integration }: { sampleAsOf?
   }, []);
 
   return (
-    <section aria-label="Date, time and data freshness" className="flex flex-wrap gap-x-6 gap-y-2 border-b border-line bg-brand-soft px-5 py-3 text-xs text-ink">
+    <section aria-label="Date, time and data freshness" className="flex flex-col gap-x-6 gap-y-2 border-b border-line bg-brand-soft px-4 py-3 text-xs text-ink md:flex-row md:flex-wrap md:px-8">
       <div>
         <span className="font-semibold">Current day &amp; time: </span>
         <time data-current-time dateTime={now?.toISOString()}>{now ? dateTime.format(now) : "Loading clock…"}</time>

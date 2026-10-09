@@ -1,9 +1,11 @@
 import { Suspense } from "react";
 import { requireUser } from "@/lib/auth/current-user";
 import { logoutAction } from "@/server/actions/auth";
+import { AppFrame } from "@/components/app-frame";
 import { DashboardUpdateStatus } from "@/components/dashboard-update-status";
 import { DEMO_AS_OF } from "@/demo/dataset";
 import { lastImportText } from "@/lib/last-import";
+import { navItems } from "@/lib/nav";
 
 export default function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -13,50 +15,60 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
   );
 }
 
+const initialsOf = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]!.toUpperCase())
+    .join("") || "?";
+
 async function Shell({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
   const integration = user.guest ? undefined : await lastImportText(user.companyId);
+  const { main, explore } = navItems({ guest: user.guest, owner: user.role === "owner" });
+
+  const banner = user.guest ? (
+    <p className="flex justify-between gap-2.5 border-b border-line bg-[#eef3eb] px-4 py-[9px] text-[11px] text-[#657367] md:px-[18px]">
+      <span>
+        <b>Open access:</b> you are browsing as a guest. No company data is shown.
+      </span>
+      <a className="underline" href="/login">
+        Sign in
+      </a>
+    </p>
+  ) : null;
+
+  const topRight = user.guest ? (
+    <>
+      <span className="hidden rounded-[5px] bg-[#f6efdf] px-2 py-[3px] text-[11px] font-semibold text-[#8c6a2e] md:inline">SYNTHETIC DATA</span>
+      <a href="/login" className="rounded-[7px] border border-line px-3 py-1.5 text-sm hover:border-brand hover:bg-[#f0f6f2]">
+        Sign in
+      </a>
+    </>
+  ) : (
+    <form action={logoutAction} className="flex items-center gap-3 text-sm">
+      <span className="hidden text-muted md:inline">
+        {user.fullName} · {user.role}
+      </span>
+      <button type="submit" className="rounded-[7px] border border-line px-3 py-1.5 hover:border-brand hover:bg-[#f0f6f2]">
+        Sign out
+      </button>
+    </form>
+  );
+
   return (
-    <div className="min-h-dvh">
-      {user.guest ? (
-        <p className="bg-brand-soft px-5 py-2 text-center text-xs text-brand">
-          Open access: you are browsing as a guest. No company data is shown. <a className="underline" href="/login">Sign in</a>
-        </p>
-      ) : null}
-      <header className="flex items-center justify-between gap-3 border-b border-line bg-surface px-5 py-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-brand">Sadaf 360</p>
-          <p className="text-sm font-medium">{user.companyName}</p>
-        </div>
-        {user.guest ? (
-          <a href="/login" className="rounded-md border border-line px-3 py-1.5 text-sm">
-            Sign in
-          </a>
-        ) : (
-          <form action={logoutAction} className="flex items-center gap-3 text-sm">
-            <span className="text-muted">
-              {user.fullName} · {user.role}
-            </span>
-            <button type="submit" className="rounded-md border border-line px-3 py-1.5">
-              Sign out
-            </button>
-          </form>
-        )}
-      </header>
-      <DashboardUpdateStatus sampleAsOf={user.guest ? DEMO_AS_OF : undefined} integration={integration} />
-      <nav aria-label="Main" className="flex gap-1 border-b border-line bg-surface px-4 text-sm">
-        {[
-          ["/dashboard", "Overview"],
-          ["/accounts/all", "Accounts"],
-          ...(user.guest ? [] : [["/sample", "Sample data"]]),
-          ...(!user.guest && user.role === "owner" ? [["/imports", "Import data"]] : []),
-        ].map(([href, label]) => (
-          <a key={href} href={href} className="rounded-t-md px-3 py-2.5 text-muted hover:text-ink">
-            {label}
-          </a>
-        ))}
-      </nav>
-      <main className="mx-auto max-w-6xl px-5 py-8">{children}</main>
-    </div>
+    <AppFrame
+      main={main}
+      explore={explore}
+      fullName={user.guest ? "Guest" : user.fullName}
+      initials={user.guest ? "G" : initialsOf(user.fullName)}
+      companyName={user.companyName}
+      banner={banner}
+      topRight={topRight}
+      status={<DashboardUpdateStatus sampleAsOf={user.guest ? DEMO_AS_OF : undefined} integration={integration} />}
+    >
+      {children}
+    </AppFrame>
   );
 }

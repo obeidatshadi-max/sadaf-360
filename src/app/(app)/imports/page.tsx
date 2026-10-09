@@ -3,7 +3,11 @@ import { desc, eq } from "drizzle-orm";
 import { getDb } from "@/db/client";
 import { importBatches } from "@/db/schema";
 import { requireUser } from "@/lib/auth/current-user";
+import { PageHeading } from "@/components/page-heading";
 import { ImportForm } from "./import-form";
+
+/** Same clock as the header strip: Jordan time. */
+const jordanTime = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Amman", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
 
 export const metadata: Metadata = { title: "Import data" };
 
@@ -36,13 +40,11 @@ export default async function ImportsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold">Import data</h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted">
-          Upload the accountant&apos;s Alpha ERP exports. Start with products and customers, then sales, receipts, unpaid invoices and stock: later files point at the codes in the earlier ones.
-          Use &quot;Check file&quot; first. It validates everything and shows totals to compare with Alpha, without saving.
-        </p>
-      </div>
+      <PageHeading
+        eyebrow={`${user.companyName} · Alpha ERP data`}
+        title="Import data"
+        sub={`Upload the accountant's Alpha ERP exports. Start with products and customers, then sales, receipts, unpaid invoices and stock: later files point at the codes in the earlier ones. Use "Check file" first. It validates everything and shows totals to compare with Alpha, without saving.`}
+      />
       <ImportForm />
       <section aria-label="Recent imports">
         <h2 className="text-sm font-semibold">Recent imports</h2>
@@ -53,7 +55,7 @@ export default async function ImportsPage() {
             <table className="w-full text-left text-sm">
               <thead className="text-xs text-muted">
                 <tr>
-                  <th className="px-3 py-2 font-medium">When</th>
+                  <th className="px-3 py-2 font-medium">When (Jordan time)</th>
                   <th className="px-3 py-2 font-medium">Type</th>
                   <th className="px-3 py-2 font-medium">File</th>
                   <th className="px-3 py-2 font-medium">As of</th>
@@ -65,7 +67,7 @@ export default async function ImportsPage() {
               <tbody>
                 {history.map((h) => (
                   <tr key={h.id} className="border-t border-line">
-                    <td className="px-3 py-2 tabular-nums">{h.createdAt.toISOString().slice(0, 16).replace("T", " ")}</td>
+                    <td className="px-3 py-2 tabular-nums">{jordanTime.format(h.createdAt)}</td>
                     <td className="px-3 py-2">{h.kind.replace("_", " ")}</td>
                     <td className="px-3 py-2">{h.fileName}</td>
                     <td className="px-3 py-2 tabular-nums">{h.snapshotDate ?? "—"}</td>

@@ -1,5 +1,6 @@
 "use server";
 
+import { refresh } from "next/cache";
 import { z } from "zod";
 import { getDb } from "@/db/client";
 import { runImport, type ImportOutcome } from "@/db/import-writer";
@@ -77,6 +78,8 @@ export async function importAction(_prev: ImportActionState, formData: FormData)
       entityId: outcome.batchId ?? undefined,
       details: { kind, fileName: file.name, status: outcome.status, rowsAccepted: outcome.rowsAccepted, rowsRejected: outcome.rowsRejected },
     });
+    // Redraw the page so the header's "Data last integrated" and the Recent imports table show this import now.
+    refresh();
   }
 
   return {
