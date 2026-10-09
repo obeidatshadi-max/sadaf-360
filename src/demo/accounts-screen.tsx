@@ -168,7 +168,7 @@ function TenderSection() {
         <Tile label="Delivering" value={jodShort(b.delivering.backlogToDeliver)} note={`Backlog still to deliver on ${b.delivering.count} awarded contract`} />
         <Tile label="Collecting" value={jodShort(b.collecting.invoicedNotCollected)} note={`Invoiced, not yet collected · ${b.deliveredNotInvoiced > 0 ? `${jodShort(b.deliveredNotInvoiced)} delivered, not invoiced` : "nothing delivered but uninvoiced"}`} />
       </div>
-      <Panel title="Tender register" sub="Value is not revenue until booked. Planned margin is a contribution estimate; verify cost allocation.">
+      <Panel title="Tender register" sub="Value is not sales until the contract is booked. Planned margin is an estimate of profit after costs. Check how costs are shared.">
         <table className="w-full whitespace-nowrap">
           <Head cols={["Tender", "Stage", "Value", "Planned margin", "Next date", "Delivered", "Invoiced", "Collected", "Guarantee", "Attention"]} />
           <tbody>
@@ -239,7 +239,7 @@ export function AccountsScreen({ view, basePath, banner }: { view: View; basePat
         <p className="text-xs font-semibold uppercase tracking-wider text-brand">Sales and accounts · {DEMO_PERIOD}</p>
         <h1 className="mt-1 text-2xl font-medium tracking-tight">{title}</h1>
         <p className="mt-1 text-sm text-muted">{sub}</p>
-        <p className="mt-1 text-xs text-muted">{banner ?? `Synthetic demonstration data, snapshot ${DEMO_AS_OF}. No real company figures.`}</p>
+        <p className="mt-1 text-xs text-muted">{banner ?? `Made-up demonstration data, on ${DEMO_AS_OF}. These are not real company figures.`}</p>
       </div>
 
       <nav aria-label="Account views" className="flex flex-wrap gap-2">
@@ -257,13 +257,13 @@ export function AccountsScreen({ view, basePath, banner }: { view: View; basePat
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Tile label="Accounts" value={String(s.accounts)} note={`${s.atRisk} at risk · ${s.watch} watch · ${s.healthy} healthy`} />
-        <Tile label="Sales YTD" value={jodShort(s.sales)} note={`${signedPct(s.salesYoy)} vs last year · ${pct(s.attainment)} of target`} />
-        <Tile label="Gross profit YTD" value={jodShort(s.grossProfit)} note={`${pct(s.margin, 1)} margin · ${pct(s.gpShare, 1)} of company · ${signedPct(s.grossProfitYoy)} vs last year`} />
-        <Tile label="Receivables" value={jodShort(s.outstanding)} note={`${jodShort(s.overdue)} overdue · ${daysText(s.dso)} sales outstanding`} />
+        <Tile label="Sales this year" value={jodShort(s.sales)} note={`${signedPct(s.salesYoy)} vs last year · ${pct(s.attainment)} of target`} />
+        <Tile label="Gross profit this year" value={jodShort(s.grossProfit)} note={`${pct(s.margin, 1)} margin · ${pct(s.gpShare, 1)} of company · ${signedPct(s.grossProfitYoy)} vs last year`} />
+        <Tile label="Unpaid invoices" value={jodShort(s.outstanding)} note={`${jodShort(s.overdue)} overdue · ${daysText(s.dso)} sales outstanding`} />
       </div>
 
       {view === "all" ? (
-        <Panel title="Tender accounts versus private accounts" sub="The two segments add up to the company total. Margin and collection behave very differently, so they are managed separately.">
+        <Panel title="Tender accounts versus private accounts" sub="The two customer types add up to the company total. Margin and payment behaviour are very different, so they are managed separately.">
           <SegmentComparison />
         </Panel>
       ) : null}
@@ -272,7 +272,7 @@ export function AccountsScreen({ view, basePath, banner }: { view: View; basePat
 
       {view === "private" ? (
         <div className="grid gap-3 sm:grid-cols-3">
-          <Tile label="Recurring consumables" value={pct(pi.capture)} note={`Purchases vs estimated demand on ${pi.unitCount} installed units · gap ${jod(pi.monthlyGap)} a month to investigate`} />
+          <Tile label="Repeat consumables" value={pct(pi.capture)} note={`Purchases vs estimated demand on ${pi.unitCount} installed units · gap ${jod(pi.monthlyGap)} a month to look into`} />
           <Tile label="Service contracts" value={`${pi.unitsCovered} of ${pi.unitCount}`} note="Installed units with a contract in force (renewal window counts as covered)" />
           <Tile label="Order rhythm" value={`${pi.ordersPerMonth.toFixed(1)} a month`} note={`${pi.quiet} account${pi.quiet === 1 ? "" : "s"} with no order for over 45 days`} />
         </div>
@@ -284,12 +284,12 @@ export function AccountsScreen({ view, basePath, banner }: { view: View; basePat
 
       <div className="space-y-1 text-xs text-muted">
         <p>
-          Gross profit = net sales − cost of goods; it excludes freight, installation, warranty, overhead and finance costs. Days sales outstanding = outstanding ÷ sales × days in the
-          period; opening receivables inflate it, so use it to compare accounts, not as an audit figure.
+          Gross profit = sales without tax minus the cost of goods sold. It does not include freight, installation, warranty, overhead or finance costs. Days sales outstanding (DSO) = unpaid
+          amount ÷ sales × days in the period. Old unpaid invoices make it higher, so use it to compare accounts, not as an audited figure.
         </p>
         <p>
-          Status: <strong>At risk</strong> when an invoice is over 90 days past due or over 90% of the credit limit is used. <strong>Watch</strong> for any overdue balance, sales below 85% of
-          target or 10% below last year, recurring purchases below 70% of estimated demand, a private account silent for 45 days, or a tender deadline within 14 days.
+          Status: <strong>At risk</strong> when an invoice is more than 90 days late, or more than 90% of the credit limit is used. <strong>Watch</strong> for any late balance, sales below 85% of
+          target or 10% below last year, repeat purchases below 70% of the estimated need, a private account silent for 45 days, or a tender deadline within 14 days.
         </p>
       </div>
     </div>

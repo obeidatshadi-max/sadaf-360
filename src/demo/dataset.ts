@@ -280,7 +280,7 @@ export const stock: StockLot[] = [
     value: 28800,
     months: 1.1,
     expiry: "2028-02-01",
-    risk: "Stock-out risk",
+    risk: "Running-out risk",
     manufacturer: "BOWA-electronic GmbH & Co. KG"
   },
   {

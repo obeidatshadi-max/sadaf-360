@@ -23,6 +23,18 @@ export const GLOSSARY = {
   "Customer type": "Tender (public buyers) or Private (private buyers).",
   "Therapeutic area": "The medical field where a product is used, for example breathing care.",
   "Product range": "The products you offer in one area.",
+  ERP: "The accounting software a company uses to record sales, purchases and stock. Sadaf uses Alpha ERP.",
+  CSV: "A simple table file. You can open it in Excel.",
+  "Made-up data": "Example numbers created for this demo. They are not real.",
+  "Profit after delivery costs": "Gross profit minus direct delivery costs such as freight, installation, training and warranty. It does not include company running costs.",
+  "Installed base": "The equipment you have already sold and installed at customers.",
+  "Repeat consumables": "Supplies that customers buy again and again to use with your equipment.",
+  "Service contract": "An agreement to maintain a customer's equipment for a fee.",
+  DSO: "Days sales outstanding: the average number of days customers take to pay.",
+  Backlog: "Work that was promised but is not delivered yet.",
+  Batch: "A group of units made at the same time. It has one expiry date.",
+  SKU: "A code for one product.",
+  Usage: "How much customers use the equipment.",
 } as const;
 
 export type Term = keyof typeof GLOSSARY;
@@ -35,4 +47,14 @@ export const PAGE_TERMS: Record<string, Term[]> = {
   opportunities: ["Estimate", "Days between orders", "Overdue", "Receivables"],
   portfolio: ["Therapeutic area", "Customer type", "Tender", "Product range", "Year to date", "Estimate"],
   weekly: ["Cash collected", "Overdue", "Receivables", "Year to date"],
+  // Screens that exist only in the demo.
+  data: ["ERP", "CSV", "Cash collected", "Overdue", "Receivables"],
+  sales: ["Gross profit", "Gross margin", "DSO", "Tender", "Customer type", "Repeat consumables"],
+  base: ["Installed base", "Repeat consumables", "Service contract", "Usage"],
+  tenders: ["Tender", "Backlog", "Gross profit", "Profit after delivery costs"],
+  service: ["Service contract", "Installed base", "Usage"],
+  opportunityRadar: ["Repeat consumables", "Service contract", "Installed base", "Estimate"],
+  alpha: ["ERP", "CSV", "Batch", "SKU", "Made-up data"],
+  compare: ["ERP", "Made-up data"],
+  company: ["ERP", "Made-up data", "Tender"],
 };
