@@ -17,7 +17,7 @@ export function navItems({ guest, owner }: { guest: boolean; owner: boolean }): 
     { label: "Owner overview", icon: "◫", href: "/dashboard", match: ["/dashboard"] },
     { label: "Compare versions", icon: "◧" },
     { label: "Data & update routine", icon: "⇅", href: "/weekly", match: ["/weekly"] },
-    { label: "Products & suppliers", icon: "▦" },
+    { label: "Products & suppliers", icon: "▦", href: "/portfolio", match: ["/portfolio"] },
     { label: "Sales & accounts", icon: "↗", href: "/accounts/all", match: ["/accounts"] },
     { label: "Inventory & supply", icon: "▦", href: "/inventory", match: ["/inventory"] },
     { label: "Finance & profitability", icon: "◉", href: "/finance", match: ["/finance"] },

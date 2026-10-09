@@ -122,6 +122,19 @@ describe("companyDataSummary", () => {
     expect(e.importsThisWeek).toEqual([]);
   });
 
+  it("groups sales by therapeutic area, keeping products with no area apart", async () => {
+    const { companyPortfolio } = await import("@/lib/portfolio");
+    await client.exec(`update products set therapeutic_area = 'Respiratory' where company_id = '${a}' and code = 'P1'`);
+    const r = await companyPortfolio(a, TODAY);
+    expect(r!.totalSales).toBe(30);
+    const by = (n: string) => r!.areas.find((x) => x.area === n)!;
+    expect(by("Respiratory")).toMatchObject({ sales: 10, growth: "Data missing", signal: "No last-year base" });
+    expect(by("Area not set").sales).toBe(20);
+    expect(r!.unclassifiedShare).toBeCloseTo(20 / 30);
+    expect(by("Respiratory").bySegment[0]!.segment).toBe("Not classified");
+    expect(await companyPortfolio(empty, TODAY)).toBeNull();
+  });
+
   it("reads an empty company as zeros with no snapshots", async () => {
     const { companyDataSummary } = await import("@/lib/company-data-summary");
     expect(await companyDataSummary(empty)).toMatchObject({ products: 0, invoices: 0, openInvoices: null, stock: null });
