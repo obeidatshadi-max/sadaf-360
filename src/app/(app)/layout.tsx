@@ -39,7 +39,18 @@ async function Shell({ children }: { children: React.ReactNode }) {
           </form>
         )}
       </header>
-      <main className="mx-auto max-w-5xl px-5 py-8">{children}</main>
+      <nav aria-label="Main" className="flex gap-1 border-b border-line bg-surface px-4 text-sm">
+        {[
+          ["/dashboard", "Overview"],
+          ["/accounts/all", "Accounts"],
+          ...(user.guest ? [] : [["/sample", "Sample data"]]),
+        ].map(([href, label]) => (
+          <a key={href} href={href} className="rounded-t-md px-3 py-2.5 text-muted hover:text-ink">
+            {label}
+          </a>
+        ))}
+      </nav>
+      <main className="mx-auto max-w-6xl px-5 py-8">{children}</main>
     </div>
   );
 }

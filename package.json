@@ -12,7 +12,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts",
     "user:create": "tsx src/db/create-user.ts",
-    "db:netlify-migrations": "node scripts/netlify-migrations.mjs"
+    "db:netlify-migrations": "node scripts/netlify-migrations.mjs",
+    "demo:build": "node scripts/build-demo.mjs"
   },
   "dependencies": {
     "@netlify/database": "^2.0.1",
@@ -36,6 +37,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "drizzle-kit": "^0.31.11",
+    "esbuild": "^0.28.2",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
     "jsdom": "^26.1.0",
