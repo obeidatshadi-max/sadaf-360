@@ -85,6 +85,23 @@ describe("companyDataSummary", () => {
     expect(await companyCash(empty, TODAY)).toBeNull();
   });
 
+  it("works out stock risk from owned stock and recent issues, whatever the sign of the issue quantity", async () => {
+    const { companyStockRisk } = await import("@/lib/stock-risk");
+    const pid = async (code: string) => (await q<{ id: string }>(`select id from products where company_id = '${a}' and code = '${code}'`))[0]!.id;
+    const p1 = await pid("P1");
+    const p2 = await pid("P2");
+    await client.exec(`insert into stock_snapshots (company_id, snapshot_date, product_id, warehouse, batch, quantity, unit_cost, expiry_date, owned) values
+      ('${a}', '2026-10-08', '${p1}', 'W', 'B1', 10, 2, '2026-10-18', true),
+      ('${a}', '2026-10-08', '${p2}', 'W', '', 5, null, null, true),
+      ('${a}', '2026-10-08', '${p2}', 'W', 'X', 99, 1, null, false)`);
+    await client.exec(`insert into stock_transactions (company_id, transaction_id, tx_date, product_id, batch, warehouse, tx_type, quantity) values
+      ('${a}', 'T1', '2026-09-20', '${p1}', 'B1', 'W', 'customer_issue', -30)`);
+    const r = await companyStockRisk(a);
+    expect(r).toMatchObject({ asOf: "2026-10-08", stockValue: 20, rows: 2, rowsWithoutCost: 1, historyDays: 18 });
+    expect(r!.expiryRisks[0]).toMatchObject({ batch: "B1", unsold: 9, estimatedLoss: 18 });
+    expect(await companyStockRisk(empty)).toBeNull();
+  });
+
   it("reads an empty company as zeros with no snapshots", async () => {
     const { companyDataSummary } = await import("@/lib/company-data-summary");
     expect(await companyDataSummary(empty)).toMatchObject({ products: 0, invoices: 0, openInvoices: null, stock: null });
