@@ -102,6 +102,19 @@ describe("sales, returns and receipts", () => {
     expect(Number(net!.n)).toBe(590);
   });
 
+  it("stores a due date from the sales file, and a later unpaid-invoice file without one does not erase it", async () => {
+    // Own company, so the extra snapshot date and batch do not disturb the counts the other tests check.
+    const c = (await q<{ id: string }>(`insert into companies (slug, name) values ('c', 'C') returning id`))[0]!.id;
+    const csv = (...lines: string[]) => lines.join("\n");
+    await imp(c, "products", csv("code,name,category", "P1,Gloves,Consumables"));
+    await imp(c, "customers", csv("code,name", "C1,Clinic"));
+    const r = await imp(c, "sales", csv("invoice no,line no,date,customer code,product code,qty,net sales,due date", "I-DUE,1,2026-09-10,C1,P1,1,10,2026-12-09"));
+    expect(r.summary).toContainEqual({ label: "Invoices without a due date", value: "0" });
+    await imp(c, "open_invoices", csv("invoice no,customer code,invoice date,remaining", "I-DUE,C1,2026-09-10,10"), { snapshotDate: "2026-10-03" });
+    const [inv] = await q<{ due_date: string }>(`select due_date::text from invoices where company_id = $1 and invoice_no = 'I-DUE'`, [c]);
+    expect(inv!.due_date).toBe("2026-12-09");
+  });
+
   it("does not let company B see or reuse company A's customers", async () => {
     const r = await imp(b, "sales", "invoice no,line no,date,customer code,product code,qty,net sales\nI1,1,2026-09-01,C1,P1,1,10");
     expect(r).toMatchObject({ status: "rejected", rowsAccepted: 0 });
