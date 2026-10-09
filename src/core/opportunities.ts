@@ -2,9 +2,9 @@
  * Opportunities for the CEO, from imported invoices and overdue balances. Pure: rows in, figures out.
  *
  * Two signals per customer, ranked by value with the largest one shown and the other named, never added:
- *  - "Reorder overdue": the customer's own reorder cycle has passed. Value = their average order over the last 12
+ *  - "Late to reorder": the customer's own reorder cycle has passed. Value = their average order over the last 12
  *    months. ESTIMATED: it is what one missed order would be worth, not a forecast of a sale.
- *  - "Collect overdue": money already invoiced and past its due date. Real balance, not an estimate.
+ *  - "Collect late payment": money already invoiced and past its due date. Real balance, not an estimate.
  */
 import { daysBetween, roundJod } from "./calc";
 import { rankOpportunities, repurchaseForecast, type NotEnoughData, type OpportunitySignal, type RepurchaseForecast } from "./predictions";
@@ -61,10 +61,10 @@ export function buildOpportunities(orders: OrderRow[], overdueByCustomer: Map<st
   reorders.sort((a, b) => rank[a.forecast.level] - rank[b.forecast.level] || b.averageOrder - a.averageOrder || a.customerCode.localeCompare(b.customerCode));
 
   const signals: OpportunitySignal[] = [];
-  for (const r of reorders) if (r.forecast.level === "Overdue" || r.forecast.level === "Lapsed") signals.push({ customerId: r.customerCode, kind: "Reorder overdue", value: r.averageOrder });
+  for (const r of reorders) if (r.forecast.level === "Overdue" || r.forecast.level === "Lapsed") signals.push({ customerId: r.customerCode, kind: "Late to reorder", value: r.averageOrder });
   for (const [code, o] of overdueByCustomer) {
     names.set(code, names.get(code) ?? o.name);
-    signals.push({ customerId: code, kind: "Collect overdue", value: o.amount });
+    signals.push({ customerId: code, kind: "Collect late payment", value: o.amount });
   }
   const ranked = rankOpportunities(signals, limit);
   const allNames = (code: string) => names.get(code) ?? code;
@@ -74,7 +74,15 @@ export function buildOpportunities(orders: OrderRow[], overdueByCustomer: Map<st
     customersWithEnoughHistory: reorders.length,
     customersWithoutEnoughHistory: notEnough,
     reorders,
-    ranked: ranked.items.map((i) => ({ customerCode: i.customerId, customerName: allNames(i.customerId), kind: i.kind, value: i.value, alsoFlagged: i.alsoFlagged, estimated: i.kind === "Reorder overdue" })),
+    ranked: ranked.items.map((i) => ({ customerCode: i.customerId, customerName: allNames(i.customerId), kind: i.kind, value: i.value, alsoFlagged: i.alsoFlagged, estimated: i.kind === "Late to reorder" })),
     total: ranked.total,
   };
 }
+
+/** Plain wording for the reorder status shown to readers. */
+export const LEVEL_LABEL = {
+  "On cycle": "Ordering as usual",
+  "Due soon": "Should order soon",
+  Overdue: "Late to order",
+  Lapsed: "May have stopped ordering",
+} as const;

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { Glossary } from "@/components/glossary";
 import { PageHeading } from "@/components/page-heading";
+import { LEVEL_LABEL } from "@/core/opportunities";
 import { MIN_ORDERS } from "@/core/predictions";
 import { requireUser } from "@/lib/auth/current-user";
 import { businessToday } from "@/lib/business-date";
@@ -11,13 +13,13 @@ export const metadata: Metadata = { title: "Management actions" };
 export default async function OpportunitiesPage() {
   const user = await requireUser();
   if (user.guest) {
-    return <PageHeading eyebrow="Management actions" title="Opportunities" sub="Sign in as a company user to see opportunities worked out from imported data." />;
+    return <PageHeading eyebrow="Management actions" title="Opportunities" sub="Please sign in with a company account to see this page. It uses the data you imported." />;
   }
   const r = await companyOpportunities(user.companyId, businessToday());
   if (!r) {
     return (
       <div>
-        <PageHeading eyebrow={`${user.companyName} · Management actions`} title="Opportunities" sub="No sales have been imported yet. Import products, customers and sales to see which customers are due to reorder." />
+        <PageHeading eyebrow={`${user.companyName} · Management actions`} title="Opportunities" sub="You have not imported sales yet. Import products, customers and sales to see which customers should order again soon." />
         {user.role === "owner" ? (
           <a href="/imports" className="rounded-[7px] bg-brand px-4 py-2 text-sm font-semibold text-brand-ink hover:bg-[#125747]">
             Import data
@@ -34,20 +36,20 @@ export default async function OpportunitiesPage() {
       <PageHeading
         eyebrow={`${user.companyName} · Management actions`}
         title="Opportunities"
-        sub={`Where to act first, as of ${r.asOf}. One line per customer: the largest signal is shown and the others are named, never added together.`}
+        sub={`Where to act first, on ${r.asOf}. Each customer has one line. We show the biggest signal and only name the others. We never add them together.`}
       />
 
       <section aria-label="Ranked opportunities">
-        <h2 className="text-sm font-semibold">Largest opportunities</h2>
+        <h2 className="text-sm font-semibold">Biggest opportunities</h2>
         {r.ranked.length === 0 ? (
-          <p className="mt-2 text-sm text-muted">Nothing to flag right now: no overdue reorders and no overdue balances.</p>
+          <p className="mt-2 text-sm text-muted">Nothing to report now: no customer is late to reorder and no payment is late.</p>
         ) : (
           <div className="mt-2 overflow-x-auto rounded-lg border border-line bg-white">
             <table className="w-full text-left text-sm">
               <thead className="text-xs text-muted">
                 <tr>
                   <th className="px-3 py-2 font-medium">Customer</th>
-                  <th className="px-3 py-2 font-medium">Signal</th>
+                  <th className="px-3 py-2 font-medium">What we found</th>
                   <th className="px-3 py-2 text-right font-medium">Value</th>
                   <th className="px-3 py-2 font-medium">Also flagged</th>
                 </tr>
@@ -70,16 +72,16 @@ export default async function OpportunitiesPage() {
           </div>
         )}
         <p className="mt-1.5 text-xs text-muted">
-          &ldquo;Reorder overdue&rdquo; is an estimate: the customer&rsquo;s average order over the last 12 months, shown because their own usual reorder gap has passed. &ldquo;Collect overdue&rdquo; is a real balance
-          past its due date{r.receivablesAsOf ? ` (unpaid invoices as of ${r.receivablesAsOf})` : ", but no unpaid-invoice file has been imported, so none is shown"}.
+          &ldquo;Late to reorder&rdquo; is an estimate. It shows the customer&rsquo;s average order in the last 12 months, because the usual time between their orders has passed. &ldquo;Collect late payment&rdquo; is a real amount that
+          is past its due date{r.receivablesAsOf ? ` (unpaid invoices as of ${r.receivablesAsOf})` : ", but no unpaid-invoice file has been imported, so none is shown"}.
         </p>
       </section>
 
       <section aria-label="Reorder timing" className="mt-6">
-        <h2 className="text-sm font-semibold">Customers due or past their usual reorder</h2>
+        <h2 className="text-sm font-semibold">Customers who should order again soon, or are late</h2>
         <p className="mt-1 text-xs text-muted">
-          ESTIMATED from each customer&rsquo;s own order history, which needs at least {MIN_ORDERS} order days. {n(r.customersWithEnoughHistory)} customer{r.customersWithEnoughHistory === 1 ? " has" : "s have"} enough;{" "}
-          {n(r.customersWithoutEnoughHistory)} {r.customersWithoutEnoughHistory === 1 ? "has" : "have"} too few orders and {r.customersWithoutEnoughHistory === 1 ? "is" : "are"} not guessed.
+          ESTIMATE from each customer&rsquo;s own order history. We need at least {MIN_ORDERS} order days. {n(r.customersWithEnoughHistory)} customer{r.customersWithEnoughHistory === 1 ? " has" : "s have"} enough;{" "}
+          {n(r.customersWithoutEnoughHistory)} {r.customersWithoutEnoughHistory === 1 ? "has" : "have"} too few orders, so we do not guess for {r.customersWithoutEnoughHistory === 1 ? "this customer" : "these customers"}.
         </p>
         {late.length === 0 ? (
           <p className="mt-2 text-sm text-muted">No customer is due or late.</p>
@@ -90,11 +92,11 @@ export default async function OpportunitiesPage() {
                 <tr>
                   <th className="px-3 py-2 font-medium">Customer</th>
                   <th className="px-3 py-2 font-medium">Status</th>
-                  <th className="px-3 py-2 text-right font-medium">Usual gap</th>
+                  <th className="px-3 py-2 text-right font-medium">Usual days between orders</th>
                   <th className="px-3 py-2 font-medium">Last order</th>
                   <th className="px-3 py-2 font-medium">Expected</th>
                   <th className="px-3 py-2 text-right font-medium">Average order</th>
-                  <th className="px-3 py-2 font-medium">Confidence</th>
+                  <th className="px-3 py-2 font-medium">How sure</th>
                 </tr>
               </thead>
               <tbody>
@@ -103,7 +105,7 @@ export default async function OpportunitiesPage() {
                     <td className="px-3 py-2">
                       {x.customerName} <span className="text-xs text-muted">{x.customerCode}</span>
                     </td>
-                    <td className="px-3 py-2">{x.forecast.level}</td>
+                    <td className="px-3 py-2">{LEVEL_LABEL[x.forecast.level]}</td>
                     <td className="px-3 py-2 text-right tabular-nums">{x.forecast.cycleDays} d</td>
                     <td className="px-3 py-2 tabular-nums">{x.forecast.lastOrder}</td>
                     <td className="px-3 py-2 tabular-nums">
@@ -118,6 +120,7 @@ export default async function OpportunitiesPage() {
           </div>
         )}
       </section>
+      <Glossary page="opportunities" />
     </div>
   );
 }

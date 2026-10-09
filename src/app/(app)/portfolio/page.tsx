@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Glossary } from "@/components/glossary";
 import { PageHeading } from "@/components/page-heading";
 import { CONCENTRATION_LIMIT, GROWTH_THRESHOLD, MIN_SHARE, NOT_SET, THIN_PRODUCTS, nextStep, type AreaFigures } from "@/core/portfolio";
 import { requireUser } from "@/lib/auth/current-user";
@@ -13,13 +14,13 @@ const tone = (a: AreaFigures) => (a.signal === "Growing" ? "text-brand" : a.sign
 export default async function PortfolioPage() {
   const user = await requireUser();
   if (user.guest) {
-    return <PageHeading eyebrow="Products & suppliers" title="Portfolio growth" sub="Sign in as a company user to see portfolio growth from imported data." />;
+    return <PageHeading eyebrow="Products & suppliers" title="Portfolio growth" sub="Please sign in with a company account to see this page. It uses the data you imported." />;
   }
   const p = await companyPortfolio(user.companyId, businessToday());
   if (!p) {
     return (
       <div>
-        <PageHeading eyebrow={`${user.companyName} · Products & suppliers`} title="Portfolio growth" sub="No sales have been imported for this year or last year yet. Import products, customers and sales to see where demand is growing." />
+        <PageHeading eyebrow={`${user.companyName} · Products & suppliers`} title="Portfolio growth" sub="You have not imported sales for this year or last year yet. Import products, customers and sales to see where demand is growing." />
         {user.role === "owner" ? (
           <a href="/imports" className="rounded-[7px] bg-brand px-4 py-2 text-sm font-semibold text-brand-ink hover:bg-[#125747]">
             Import data
@@ -34,18 +35,18 @@ export default async function PortfolioPage() {
       <PageHeading
         eyebrow={`${user.companyName} · Products & suppliers`}
         title="Portfolio growth"
-        sub={`Where demand is growing, by therapeutic area and customer type: ${p.from} to ${p.to} against ${p.priorFrom} to ${p.priorTo}. Net sales, returns deducted. This is a signal to investigate, not a forecast.`}
+        sub={`Where demand is growing, by therapeutic area and customer type. This year: ${p.from} to ${p.to}. Compared with: ${p.priorFrom} to ${p.priorTo}. Sales without tax, after taking off returns. This is a hint to look closer, not a forecast.`}
       />
       {p.unclassifiedShare > 0.2 ? (
         <p className="mb-4 rounded-lg border border-line bg-white p-3 text-xs text-muted" role="note">
-          {pct(p.unclassifiedShare)} of this year&rsquo;s sales are on products with no therapeutic area, so the picture below is incomplete. Add an area to each product in the product list (column &ldquo;therapeutic area&rdquo;) and import it again.
+          {pct(p.unclassifiedShare)} of this year&rsquo;s sales are on products with no therapeutic area, so the picture below is not complete. Add an area to each product in the product list (column &ldquo;therapeutic area&rdquo;) and import the list again.
         </p>
       ) : null}
 
       <section aria-label="Where to look for more products">
-        <h2 className="text-sm font-semibold">Growing areas with a thin product range</h2>
+        <h2 className="text-sm font-semibold">Growing areas where you have few products</h2>
         {p.lookHere.length === 0 ? (
-          <p className="mt-2 text-sm text-muted">No area is both growing broadly and thinly covered right now.</p>
+          <p className="mt-2 text-sm text-muted">No area is both growing and short of products right now.</p>
         ) : (
           <ul className="mt-2 space-y-2">
             {p.lookHere.map((a) => {
@@ -54,7 +55,7 @@ export default async function PortfolioPage() {
                 <li key={a.area} className="rounded-[9px] border border-line bg-white p-4 text-sm">
                   <b>{a.area}</b>: sales {signedPct(a.growth)} ({jod(a.delta)} more than last year), spread over {a.customers} customers.
                   {best ? ` Most of the increase is with ${best.segment} customers (${jod(best.delta)}).` : ""} Only {a.activeProducts} active product{a.activeProducts === 1 ? "" : "s"} from {a.suppliers} supplier{a.suppliers === 1 ? "" : "s"}.
-                  <span className="mt-1 block text-xs text-muted">Worth checking whether another product or supplier would serve this demand. Confirm the need, margin and supplier fit before acting.</span>
+                  <span className="mt-1 block text-xs text-muted">Check if another product or supplier could serve this demand. Confirm the need, the margin and the supplier fit before you act.</span>
                 </li>
               );
             })}
@@ -71,10 +72,10 @@ export default async function PortfolioPage() {
                 <th className="px-3 py-2 font-medium">Therapeutic area</th>
                 <th className="px-3 py-2 text-right font-medium">Sales</th>
                 <th className="px-3 py-2 text-right font-medium">Share</th>
-                <th className="px-3 py-2 text-right font-medium">vs last year</th>
-                <th className="px-3 py-2 font-medium">Signal</th>
+                <th className="px-3 py-2 text-right font-medium">Change vs last year</th>
+                <th className="px-3 py-2 font-medium">What we see</th>
                 <th className="px-3 py-2 text-right font-medium">Top customer</th>
-                <th className="px-3 py-2 text-right font-medium">Range</th>
+                <th className="px-3 py-2 text-right font-medium">Products</th>
                 <th className="px-3 py-2 font-medium">Suggested next step</th>
               </tr>
             </thead>
@@ -105,10 +106,11 @@ export default async function PortfolioPage() {
           </table>
         </div>
         <p className="mt-1.5 text-xs text-muted">
-          Rules: &ldquo;Growing&rdquo; means up at least {pct(GROWTH_THRESHOLD)} on the same dates last year; &ldquo;Declining&rdquo; means down at least that much. Areas under {pct(MIN_SHARE)} of sales are too small to judge. If one customer is more than{" "}
-          {pct(CONCENTRATION_LIMIT)} of an area, growth is attributed to that customer, not called a trend. The range is thin with fewer than {THIN_PRODUCTS} active products or a single supplier.
+          Rules: &ldquo;Growing&rdquo; means sales are up at least {pct(GROWTH_THRESHOLD)} on the same dates last year. &ldquo;Declining&rdquo; means they are down at least that much. An area with less than {pct(MIN_SHARE)} of sales is too small to judge. If one customer buys more than{" "}
+          {pct(CONCENTRATION_LIMIT)} of an area, we say the growth comes from that customer and do not call it a trend. We say you have few products in an area when you have fewer than {THIN_PRODUCTS} active products or only one supplier.
         </p>
       </section>
+      <Glossary page="portfolio" />
     </div>
   );
 }

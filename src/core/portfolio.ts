@@ -38,7 +38,7 @@ export interface AreaCoverage {
   suppliers: number;
 }
 
-export type Signal = "Growing" | "Growth rests on one customer" | "Declining" | "Stable" | "Too small to judge" | "No last-year base";
+export type Signal = "Growing" | "Growth comes from one customer" | "Declining" | "Stable" | "Too small to judge" | "No sales last year";
 
 export interface SegmentFigures {
   segment: string;
@@ -101,8 +101,8 @@ export function buildPortfolio(rows: SalesRow[], coverage: AreaCoverage[]): Port
     const growth = yoyGrowth(sales, priorSales);
     let signal: Signal;
     if (area === NOT_SET || share < MIN_SHARE) signal = "Too small to judge";
-    else if (typeof growth !== "number") signal = "No last-year base";
-    else if (growth >= GROWTH_THRESHOLD) signal = topCustomerShare > CONCENTRATION_LIMIT ? "Growth rests on one customer" : "Growing";
+    else if (typeof growth !== "number") signal = "No sales last year";
+    else if (growth >= GROWTH_THRESHOLD) signal = topCustomerShare > CONCENTRATION_LIMIT ? "Growth comes from one customer" : "Growing";
     else if (growth <= -GROWTH_THRESHOLD) signal = "Declining";
     else signal = "Stable";
     if (area === NOT_SET) signal = "Too small to judge";
@@ -158,11 +158,11 @@ export function nextStep(a: Pick<AreaFigures, "signal" | "thinCoverage">): strin
       return a.thinCoverage
         ? "Ask current suppliers for more products in this area, and look for a second supplier. Confirm need, margin and fit first."
         : "Keep stock and supply secure. The range looks sufficient.";
-    case "Growth rests on one customer":
+    case "Growth comes from one customer":
       return "Check whether this customer's demand will repeat before adding range.";
     case "Declining":
       return "Find out why: price, stock-outs or a lost customer.";
-    case "No last-year base":
+    case "No sales last year":
       return "Wait for a full comparison period before judging.";
     case "Too small to judge":
       return "No action yet.";

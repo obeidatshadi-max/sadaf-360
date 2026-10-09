@@ -25,11 +25,11 @@ describe("buildOpportunities", () => {
   });
   it("ranks one line per customer, the larger signal first, without adding the others", () => {
     expect(r.ranked.map((x) => [x.customerCode, x.kind, x.value])).toEqual([
-      ["B", "Collect overdue", 900],
-      ["A", "Reorder overdue", 125],
-      ["Z", "Collect overdue", 10],
+      ["B", "Collect late payment", 900],
+      ["A", "Late to reorder", 125],
+      ["Z", "Collect late payment", 10],
     ]);
-    expect(r.ranked[1]!.alsoFlagged).toEqual(["Collect overdue"]);
+    expect(r.ranked[1]!.alsoFlagged).toEqual(["Collect late payment"]);
     expect(r.ranked[1]!.estimated).toBe(true);
     expect(r.ranked[0]!.estimated).toBe(false);
     expect(r.ranked[2]!.customerName).toBe("Cust Z");
