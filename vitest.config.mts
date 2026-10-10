@@ -9,5 +9,11 @@ export default defineConfig({
       "server-only": fileURLToPath(new URL("./tests/stubs/server-only.ts", import.meta.url)),
     },
   },
-  test: { include: ["src/**/*.test.ts", "tests/**/*.test.ts"], environment: "node" },
+  test: {
+    include: ["src/**/*.test.ts", "tests/**/*.test.ts"],
+    environment: "node",
+    // JSDOM demo renders and in-process Postgres start-up exceed the 5s default when many files run in parallel.
+    testTimeout: 30000,
+    hookTimeout: 60000,
+  },
 });
