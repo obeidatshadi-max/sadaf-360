@@ -60,7 +60,7 @@ The default development address is `http://localhost:3000/dashboard`. Sample acc
 
 ## Existing hosted sites
 
-- Main app: https://sadaf-360.netlify.app/dashboard
+- Main app: https://medsupply360.netlify.app/dashboard
 - Demonstration: https://sadaf-360-demo.netlify.app/
 
 These are the existing production addresses. Consolidating local files does not publish a deployment. Use the local canonical files above for the changes made in this consolidation.

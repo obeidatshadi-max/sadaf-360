@@ -8,7 +8,7 @@ import { crumbFor, type NavItem } from "@/lib/nav";
 const isCurrent = (pathname: string, item: NavItem) => item.match?.some((m) => pathname === m || pathname.startsWith(`${m}/`)) ?? false;
 
 /**
- * The demo's layout: dark sidebar with the SADAF360 mark, white top bar with a breadcrumb, then the freshness strip
+ * The demo's layout: dark sidebar with the MEDSUPPLY360 mark and the customer's name, white top bar with a breadcrumb, then the freshness strip
  * and the page. Under 768 px the sidebar becomes a drawer opened from the menu button.
  */
 export function AppFrame({
@@ -77,8 +77,8 @@ export function AppFrame({
         className={`${open ? "fixed inset-y-0 left-0 z-20 flex w-[min(86vw,300px)] shadow-2xl" : "hidden"} h-dvh flex-col bg-side px-4 py-[27px] text-[#e9efeb] md:sticky md:top-0 md:z-auto md:flex md:w-auto md:shadow-none xl:px-[18px]`}
       >
         <div className="px-3 text-[25px] font-bold tracking-[-0.6px]">
-          SADAF<span className="text-gold-soft">360</span>
-          <small className="mt-[5px] block text-[10px] font-normal tracking-[2px] text-[#a7bab2]">MEDICAL · BUSINESS CONTROL TOWER</small>
+          MEDSUPPLY<span className="text-gold-soft">360</span>
+          <small className="mt-[5px] block text-[10px] font-normal uppercase tracking-[2px] text-[#a7bab2]">{companyName} · BUSINESS CONTROL TOWER</small>
         </div>
         <p className="mx-3 mb-2.5 mt-9 text-[10px] tracking-[1.8px] text-side-muted">YOUR BUSINESS</p>
         <nav aria-label="Main" className="min-h-0 overflow-y-auto overflow-x-hidden [scrollbar-color:#455952_transparent] [scrollbar-width:thin]">

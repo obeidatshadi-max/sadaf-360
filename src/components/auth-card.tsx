@@ -5,7 +5,7 @@ export function AuthCard({ title, subtitle, children }: { title: string; subtitl
   return (
     <main className="flex min-h-dvh items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm rounded-lg border border-line bg-surface p-6">
-        <p className="text-xs font-semibold uppercase tracking-wider text-brand">Sadaf 360</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-brand">MedSupply360</p>
         <h1 className="mt-1 text-xl font-semibold">{title}</h1>
         <p className="mt-1 text-sm text-muted">{subtitle}</p>
         {children}
