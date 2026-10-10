@@ -20,7 +20,7 @@ export async function sendMail(to: string, subject: string, text: string, html: 
       method: "POST",
       headers: { "api-key": process.env.BREVO_API_KEY!, "content-type": "application/json", accept: "application/json" },
       body: JSON.stringify({
-        sender: { name: process.env.MAIL_SENDER_NAME ?? "Sadaf 360", email: process.env.MAIL_SENDER },
+        sender: { name: process.env.MAIL_SENDER_NAME ?? "MedSupply360", email: process.env.MAIL_SENDER },
         to: [{ email: to }],
         subject,
         textContent: text,

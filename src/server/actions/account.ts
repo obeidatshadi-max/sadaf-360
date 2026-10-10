@@ -127,7 +127,7 @@ export async function requestResetAction(_prev: ForgotState, formData: FormData)
         const link = `${base}/reset-password?token=${token}`;
         await sendMail(
           email,
-          "Reset your Sadaf 360 password",
+          "Reset your MedSupply360 password",
           `Hello ${user.fullName},\n\nUse this link to choose a new password. It works once and expires in ${RESET_TTL_MINUTES} minutes:\n${link}\n\nIf you did not ask for this, ignore this email; your password stays the same.`,
           `<p>Hello ${escapeHtml(user.fullName)},</p><p><a href="${link}">Choose a new password</a>. The link works once and expires in ${RESET_TTL_MINUTES} minutes.</p><p>If you did not ask for this, ignore this email; your password stays the same.</p>`,
         );
